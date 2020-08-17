@@ -21,7 +21,7 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
 
   static constexpr MessageStrategy message_strategy =
       MessageStrategy::kSyncOnOuterVertex;
-  static constexpr LoadStrategy load_strategy = LoadStrategy::kBothOutIn;
+  static constexpr LoadStrategy load_strategy = LoadStrategy::kOnlyOut;
 
   void PEval(const fragment_t& frag, context_t& ctx,
              message_manager_t& messages) {
@@ -38,18 +38,19 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
       ctx.delta[u] = 0;
       ctx.value[u] += delta;
 
-      if(out_degree > 0) {
+      if (out_degree > 0) {
         for (auto e : oe) {
           auto v = e.neighbor;
           ctx.delta_next[v] += ctx.dumpling_factor * delta / out_degree;
         }
       } else {
-        ctx.delta_next[u] = ctx.dumpling_factor * delta;
+        ctx.delta_next[u] = delta;
       }
     }
 
     for (auto& u : outer_vertices) {
-      messages.SyncStateOnOuterVertex<fragment_t, double>(frag, u, ctx.delta_next[u]);
+      messages.SyncStateOnOuterVertex<fragment_t, double>(frag, u,
+                                                          ctx.delta_next[u]);
       ctx.delta[u] = 0;
       ctx.delta_next[u] = 0;
     }
@@ -92,13 +93,13 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
       ctx.delta[u] = 0;
       ctx.value[u] += delta;
 
-      if(out_degree > 0) {
+      if (out_degree > 0) {
         for (auto e : oe) {
           auto v = e.neighbor;
           ctx.delta_next[v] += ctx.dumpling_factor * delta / out_degree;
         }
       } else {
-        ctx.delta_next[u] = ctx.dumpling_factor * delta;
+        ctx.delta_next[u] = delta;
       }
     }
 

@@ -234,7 +234,7 @@ void Run() {
                                                       FLAGS_pr_d, FLAGS_pr_mr);
     } else if (name == "pagerank_delta") {
       using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-                                                 LoadStrategy::kBothOutIn>;
+                                                 LoadStrategy::kOnlyOut>;
       using AppType = PageRankDelta<GraphType>;
       CreateAndQuery<GraphType, AppType, double, int>(
           comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
