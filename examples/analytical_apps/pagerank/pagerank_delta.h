@@ -20,12 +20,13 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
   using vertex_t = typename FRAG_T::vertex_t;
 
   static constexpr MessageStrategy message_strategy =
-      MessageStrategy::kAlongOutgoingEdgeToOuterVertex;
+      MessageStrategy::kSyncOnOuterVertex;
   static constexpr LoadStrategy load_strategy = LoadStrategy::kBothOutIn;
 
   void PEval(const fragment_t& frag, context_t& ctx,
              message_manager_t& messages) {
     auto inner_vertices = frag.InnerVertices();
+    auto outer_vertices = frag.OuterVertices();
 
     ctx.step = 0;
 
@@ -47,8 +48,10 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
       }
     }
 
-    for (auto& u : inner_vertices) {
-      messages.SendMsgThroughOEdges(frag, u, ctx.delta_next[u]);
+    for (auto& u : outer_vertices) {
+      messages.SyncStateOnOuterVertex<fragment_t, double>(frag, u, ctx.delta_next[u]);
+      ctx.delta[u] = 0;
+      ctx.delta_next[u] = 0;
     }
 
     if (frag.fnum() == 1) {
@@ -59,6 +62,7 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
   void IncEval(const fragment_t& frag, context_t& ctx,
                message_manager_t& messages) {
     auto inner_vertices = frag.InnerVertices();
+    auto outer_vertices = frag.OuterVertices();
 
     vertex_t recv_v;
     double msg;
@@ -98,8 +102,10 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
       }
     }
 
-    for (auto& u : inner_vertices) {
-      messages.SendMsgThroughOEdges(frag, u, ctx.delta_next[u]);
+    for (auto& u : outer_vertices) {
+      messages.SyncStateOnOuterVertex(frag, u, ctx.delta_next[u]);
+      ctx.delta[u] = 0;
+      ctx.delta_next[u] = 0;
     }
 
     ctx.step++;

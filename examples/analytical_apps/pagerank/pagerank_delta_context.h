@@ -30,7 +30,7 @@ class PageRanDeltaContext : public ContextBase<FRAG_T> {
 
     value.Init(vertices, 0);
     delta.Init(vertices, (1 - dumpling_factor) / frag.GetTotalVerticesNum());
-    delta_next.Init(vertices);
+    delta_next.Init(vertices, 0);
     step = 0;
   }
 
