@@ -5,7 +5,7 @@
 
 #include "pagerank/pagerank_sync_context.h"
 
-//#define DANGLING_SELF_CYCLE
+#define DANGLING_SELF_CYCLE
 
 namespace grape {
 /**
@@ -68,7 +68,6 @@ class PageRankSync : public AppBase<FRAG_T, PageRankSyncContext<FRAG_T>>,
     for (auto& u : outer_vertices) {
       messages.SyncStateOnOuterVertex<fragment_t, double>(frag, u,
                                                           ctx.delta_next[u]);
-      ctx.delta[u] = 0;
       ctx.delta_next[u] = 0;
     }
 
@@ -93,10 +92,11 @@ class PageRankSync : public AppBase<FRAG_T, PageRankSyncContext<FRAG_T>>,
       local_delta_sum += ctx.delta_next[u];
     }
 
-    Sum(local_delta_sum, ctx.delta_sum);
+    double delta_sum = 0;
+    Sum(local_delta_sum, delta_sum);
 
-    VLOG(1) << "Round: " << ctx.step << " total delta: " << ctx.delta_sum;
-    if (ctx.delta_sum < ctx.delta_sum_threshold || ctx.step >= ctx.max_round) {
+    VLOG(1) << "Round: " << ctx.step << " total delta: " << delta_sum;
+    if (delta_sum < ctx.delta_sum_threshold || ctx.step >= ctx.max_round) {
       return;
     }
 
@@ -138,7 +138,6 @@ class PageRankSync : public AppBase<FRAG_T, PageRankSyncContext<FRAG_T>>,
 
     for (auto& u : outer_vertices) {
       messages.SyncStateOnOuterVertex(frag, u, ctx.delta_next[u]);
-      ctx.delta[u] = 0;
       ctx.delta_next[u] = 0;
     }
 

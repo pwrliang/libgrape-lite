@@ -1,11 +1,11 @@
 
 
-#ifndef EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_H_
-#define EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_H_
+#ifndef ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_PARALLEL_H_
+#define ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_PARALLEL_H_
 
 #include <grape/grape.h>
 
-#include "pagerank/pagerank_async_context.h"
+#include "pagerank/pagerank_async_parallel_context.h"
 #define DANGLING_SELF_CYCLE
 
 namespace grape {
@@ -15,11 +15,13 @@ namespace grape {
  *  @tparam FRAG_T
  */
 template <typename FRAG_T>
-class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
-                      public Communicator {
+class PageRankAsyncParallel
+    : public ParallelAppBase<FRAG_T, PageRankAsyncParallelContext<FRAG_T>>,
+      public ParallelEngine,
+      public Communicator {
  public:
-  INSTALL_DEFAULT_WORKER(PageRankAsync<FRAG_T>, PageRankAsyncContext<FRAG_T>,
-                         FRAG_T)
+  INSTALL_PARALLEL_WORKER(PageRankAsyncParallel<FRAG_T>,
+                          PageRankAsyncParallelContext<FRAG_T>, FRAG_T)
   using vertex_t = typename FRAG_T::vertex_t;
 
   static constexpr MessageStrategy message_strategy =
@@ -32,37 +34,30 @@ class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
     auto outer_vertices = frag.OuterVertices();
 
     ctx.step = 0;
-#ifndef DANGLING_SELF_CYCLE
+    messages.InitChannels(thread_num());
+    auto& channels = messages.Channels();
     double dangling_sum = 0.0;
-#endif
-    for (auto& u : inner_vertices) {
+
+    ForEach(inner_vertices, [&frag, &ctx, &dangling_sum](int tid, vertex_t u) {
       auto oe = frag.GetOutgoingAdjList(u);
       int out_degree = oe.Size();
-      auto delta = ctx.delta[u];
+      auto delta = atomic_exch(ctx.delta[u], 0);
 
-      ctx.delta[u] = 0;
       ctx.value[u] += delta;
 
       if (out_degree > 0) {
         for (auto e : oe) {
           auto v = e.neighbor;
-          ctx.delta[v] += ctx.dumpling_factor * delta / out_degree;
+          atomic_add(ctx.delta[v], ctx.dumpling_factor * delta / out_degree);
         }
       } else {
 #ifdef DANGLING_SELF_CYCLE
-        ctx.delta[u] += ctx.dumpling_factor * delta;
+        atomic_add(ctx.delta[u], ctx.dumpling_factor * delta);
 #else
-        dangling_sum += delta;
+        atomic_add(dangling_sum, delta);
 #endif
       }
-    }
-
-    for (auto& u : outer_vertices) {
-      messages.SyncStateOnOuterVertex<fragment_t, double>(frag, u,
-                                                          ctx.delta[u]);
-      ctx.delta[u] = 0;
-    }
-
+    });
 #ifndef DANGLING_SELF_CYCLE
     double total_dangling_sum = 0;
     Sum(dangling_sum, total_dangling_sum);
@@ -72,6 +67,13 @@ class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
           ctx.dumpling_factor * total_dangling_sum / frag.GetTotalVerticesNum();
     }
 #endif
+
+    ForEach(outer_vertices, [&frag, &ctx, &channels](int tid, vertex_t u) {
+      channels[tid].SyncStateOnOuterVertex<fragment_t, double>(frag, u,
+                                                               ctx.delta[u]);
+      ctx.delta[u] = 0;
+    });
+
     if (frag.fnum() == 1) {
       messages.ForceContinue();
     }
@@ -81,12 +83,13 @@ class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
                message_manager_t& messages) {
     auto inner_vertices = frag.InnerVertices();
     auto outer_vertices = frag.OuterVertices();
+    auto& channels = messages.Channels();
+    int thrd_num = thread_num();
 
-    vertex_t recv_v;
-    double msg;
-    while (messages.GetMessage<fragment_t, double>(frag, recv_v, msg)) {
-      ctx.delta[recv_v] += msg;
-    }
+    messages.ParallelProcess<fragment_t, double>(
+        thrd_num, frag, [&ctx](int tid, vertex_t v, double delta) {
+          atomic_add(ctx.delta[v], delta);
+        });
 
     double local_delta_sum = 0;
     for (auto& u : inner_vertices) {
@@ -100,35 +103,28 @@ class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
     if (delta_sum < ctx.delta_sum_threshold || ctx.step >= ctx.max_round) {
       return;
     }
-
-#ifndef DANGLING_SELF_CYCLE
     double dangling_sum = 0.0;
-#endif
-    for (auto& u : inner_vertices) {
+
+    ForEach(inner_vertices, [&frag, &ctx, &dangling_sum](int tid, vertex_t u) {
       auto oe = frag.GetOutgoingAdjList(u);
       int out_degree = oe.Size();
-      auto delta = ctx.delta[u];
+      auto delta = atomic_exch(ctx.delta[u], 0);
 
-      ctx.delta[u] = 0;
       ctx.value[u] += delta;
 
       if (out_degree > 0) {
         for (auto e : oe) {
           auto v = e.neighbor;
-          ctx.delta[v] += ctx.dumpling_factor * delta / out_degree;
+          atomic_add(ctx.delta[v], ctx.dumpling_factor * delta / out_degree);
         }
       } else {
 #ifdef DANGLING_SELF_CYCLE
-        ctx.delta[u] += ctx.dumpling_factor * delta;
+        atomic_add(ctx.delta[u], ctx.dumpling_factor * delta);
 #else
-        dangling_sum += delta;
+        atomic_add(dangling_sum, delta);
 #endif
       }
-    }
-    for (auto& u : outer_vertices) {
-      messages.SyncStateOnOuterVertex(frag, u, ctx.delta[u]);
-      ctx.delta[u] = 0;
-    }
+    });
 #ifndef DANGLING_SELF_CYCLE
     double total_dangling_sum = 0;
     Sum(dangling_sum, total_dangling_sum);
@@ -139,6 +135,12 @@ class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
     }
 #endif
 
+    ForEach(outer_vertices, [&frag, &ctx, &channels](int tid, vertex_t u) {
+      channels[tid].SyncStateOnOuterVertex<fragment_t, double>(frag, u,
+                                                               ctx.delta[u]);
+      ctx.delta[u] = 0;
+    });
+
     ctx.step++;
     if (frag.fnum() == 1) {
       messages.ForceContinue();
@@ -148,4 +150,4 @@ class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
 
 }  // namespace grape
 
-#endif  // EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_H_
+#endif  // ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_PARALLEL_H_

@@ -129,6 +129,13 @@ inline void atomic_add(double& a, double b) {
   } while (!atomic_compare_and_swap(a, old_a, new_a));
 }
 
+inline double atomic_exch(double& a, double b) {
+  uint64_t* ptr = reinterpret_cast<uint64_t*>(&a);
+  uint64_t* new_val_ptr = reinterpret_cast<uint64_t*>(&b);
+  uint64_t ret;
+  __atomic_exchange(ptr, new_val_ptr, &ret, __ATOMIC_SEQ_CST);
+  return *reinterpret_cast<double*>(&ret);
+}
 }  // namespace grape
 
 #endif  // GRAPE_UTILS_ATOMIC_OPS_H_

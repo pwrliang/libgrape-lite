@@ -1,7 +1,7 @@
 
 
-#ifndef EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_CONTEXT_H_
-#define EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_CONTEXT_H_
+#ifndef ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_PARALLEL_CONTEXT_H_
+#define ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_PARALLEL_CONTEXT_H_
 
 #include <grape/grape.h>
 
@@ -14,16 +14,15 @@ namespace grape {
  * @tparam FRAG_T
  */
 template <typename FRAG_T>
-class PageRankAsyncContext : public ContextBase<FRAG_T> {
+class PageRankAsyncParallelContext : public ContextBase<FRAG_T> {
  public:
   using oid_t = typename FRAG_T::oid_t;
   using vid_t = typename FRAG_T::vid_t;
 
-  void Init(const FRAG_T& frag, DefaultMessageManager& messages,
+  void Init(const FRAG_T& frag, ParallelMessageManager& messages,
             double dumpling_factor, int max_round, double delta_sum_threshold) {
     auto vertices = frag.Vertices();
     auto inner_vertices = frag.InnerVertices();
-
     this->dumpling_factor = dumpling_factor;
     this->max_round = max_round;
     this->delta_sum_threshold = delta_sum_threshold;
@@ -34,6 +33,7 @@ class PageRankAsyncContext : public ContextBase<FRAG_T> {
     for(auto v:inner_vertices) {
       delta[v] = (1 - dumpling_factor) / frag.GetTotalVerticesNum();
     }
+
     step = 0;
   }
 
@@ -53,4 +53,4 @@ class PageRankAsyncContext : public ContextBase<FRAG_T> {
   double delta_sum_threshold;
 };
 }  // namespace grape
-#endif  // EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_CONTEXT_H_
+#endif  // ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_PARALLEL_CONTEXT_H_

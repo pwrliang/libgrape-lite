@@ -21,16 +21,21 @@ class PageRankSyncContext : public ContextBase<FRAG_T> {
 
   void Init(const FRAG_T& frag, DefaultMessageManager& messages,
             double dumpling_factor, int max_round, double delta_sum_threshold) {
+    auto inner_vertices = frag.InnerVertices();
     auto vertices = frag.Vertices();
 
     this->dumpling_factor = dumpling_factor;
     this->max_round = max_round;
-    this->delta_sum = 0;
     this->delta_sum_threshold = delta_sum_threshold;
 
-    value.Init(vertices, 0);
-    delta.Init(vertices, (1 - dumpling_factor) / frag.GetTotalVerticesNum());
+    value.Init(inner_vertices, 0);
+    delta.Init(vertices, 0);
     delta_next.Init(vertices, 0);
+
+    for(auto v:inner_vertices) {
+      delta[v] = (1 - dumpling_factor) / frag.GetTotalVerticesNum();
+    }
+
     step = 0;
   }
 
@@ -50,7 +55,6 @@ class PageRankSyncContext : public ContextBase<FRAG_T> {
   int step = 0;
   int max_round = 0;
   double dumpling_factor;
-  double delta_sum = 0;
   double delta_sum_threshold;
 };
 }  // namespace grape
