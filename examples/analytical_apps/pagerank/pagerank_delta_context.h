@@ -36,9 +36,11 @@ class PageRanDeltaContext : public ContextBase<FRAG_T> {
 
   void Output(const FRAG_T& frag, std::ostream& os) {
     auto inner_vertices = frag.InnerVertices();
+    auto delta_sum = 0;
     for (auto v : inner_vertices) {
       os << frag.GetId(v) << " " << std::scientific << std::setprecision(15)
          << value[v] << std::endl;
+      delta_sum += delta[v] + delta_next[v];
     }
   }
 

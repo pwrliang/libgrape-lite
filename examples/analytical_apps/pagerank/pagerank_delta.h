@@ -28,11 +28,12 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
     auto inner_vertices = frag.InnerVertices();
     auto outer_vertices = frag.OuterVertices();
 
+    LOG(INFO) << "dumpling_factor: " << ctx.dumpling_factor;
     ctx.step = 0;
 
     for (auto& u : inner_vertices) {
       auto oe = frag.GetOutgoingAdjList(u);
-      int out_degree = oe.Size();
+      auto out_degree = oe.Size();
       auto delta = ctx.delta[u];
 
       ctx.delta[u] = 0;
@@ -44,7 +45,7 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
           ctx.delta_next[v] += ctx.dumpling_factor * delta / out_degree;
         }
       } else {
-        ctx.delta_next[u] = delta;
+        ctx.delta_next[u] += ctx.dumpling_factor * delta;
       }
     }
 
@@ -87,7 +88,7 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
 
     for (auto& u : inner_vertices) {
       auto oe = frag.GetOutgoingAdjList(u);
-      int out_degree = oe.Size();
+      auto out_degree = oe.Size();
       auto delta = ctx.delta[u];
 
       ctx.delta[u] = 0;
@@ -99,7 +100,7 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
           ctx.delta_next[v] += ctx.dumpling_factor * delta / out_degree;
         }
       } else {
-        ctx.delta_next[u] = delta;
+        ctx.delta_next[u] += ctx.dumpling_factor * delta;
       }
     }
 
