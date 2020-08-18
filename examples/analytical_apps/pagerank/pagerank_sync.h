@@ -1,9 +1,11 @@
-#ifndef LIBGRAPE_LITE_EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_DELTA_H_
-#define LIBGRAPE_LITE_EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_DELTA_H_
+#ifndef EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_DELTA_H_
+#define EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_DELTA_H_
 
 #include <grape/grape.h>
 
-#include "pagerank/pagerank_delta_context.h"
+#include "pagerank/pagerank_sync_context.h"
+
+//#define DANGLING_SELF_CYCLE
 
 namespace grape {
 /**
@@ -12,10 +14,10 @@ namespace grape {
  *  @tparam FRAG_T
  */
 template <typename FRAG_T>
-class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
+class PageRankSync : public AppBase<FRAG_T, PageRankSyncContext<FRAG_T>>,
                       public Communicator {
  public:
-  INSTALL_DEFAULT_WORKER(PageRankDelta<FRAG_T>, PageRanDeltaContext<FRAG_T>,
+  INSTALL_DEFAULT_WORKER(PageRankSync<FRAG_T>, PageRankSyncContext<FRAG_T>,
                          FRAG_T)
   using vertex_t = typename FRAG_T::vertex_t;
 
@@ -28,9 +30,11 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
     auto inner_vertices = frag.InnerVertices();
     auto outer_vertices = frag.OuterVertices();
 
-    LOG(INFO) << "dumpling_factor: " << ctx.dumpling_factor;
     ctx.step = 0;
 
+#ifndef DANGLING_SELF_CYCLE
+    double dangling_sum = 0.0;
+#endif
     for (auto& u : inner_vertices) {
       auto oe = frag.GetOutgoingAdjList(u);
       auto out_degree = oe.Size();
@@ -45,9 +49,21 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
           ctx.delta_next[v] += ctx.dumpling_factor * delta / out_degree;
         }
       } else {
+#ifdef DANGLING_SELF_CYCLE
         ctx.delta_next[u] += ctx.dumpling_factor * delta;
+#else
+        dangling_sum += delta;
+#endif
       }
     }
+#ifndef DANGLING_SELF_CYCLE
+    double total_dangling_sum = 0;
+    Sum(dangling_sum, total_dangling_sum);
+
+    for (auto& u : inner_vertices) {
+      ctx.delta_next[u] += ctx.dumpling_factor * total_dangling_sum / frag.GetTotalVerticesNum();
+    }
+#endif
 
     for (auto& u : outer_vertices) {
       messages.SyncStateOnOuterVertex<fragment_t, double>(frag, u,
@@ -86,6 +102,9 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
 
     ctx.delta_next.Swap(ctx.delta);
 
+#ifndef DANGLING_SELF_CYCLE
+    double dangling_sum = 0.0;
+#endif
     for (auto& u : inner_vertices) {
       auto oe = frag.GetOutgoingAdjList(u);
       auto out_degree = oe.Size();
@@ -100,9 +119,22 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
           ctx.delta_next[v] += ctx.dumpling_factor * delta / out_degree;
         }
       } else {
+#ifdef DANGLING_SELF_CYCLE
         ctx.delta_next[u] += ctx.dumpling_factor * delta;
+#else
+        dangling_sum += delta;
+#endif
       }
     }
+
+#ifndef DANGLING_SELF_CYCLE
+    double total_dangling_sum = 0;
+    Sum(dangling_sum, total_dangling_sum);
+
+    for (auto& u : inner_vertices) {
+      ctx.delta_next[u] += ctx.dumpling_factor * total_dangling_sum / frag.GetTotalVerticesNum();
+    }
+#endif
 
     for (auto& u : outer_vertices) {
       messages.SyncStateOnOuterVertex(frag, u, ctx.delta_next[u]);
@@ -119,4 +151,4 @@ class PageRankDelta : public AppBase<FRAG_T, PageRanDeltaContext<FRAG_T>>,
 
 }  // namespace grape
 
-#endif  // LIBGRAPE_LITE_EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_DELTA_H_
+#endif  // EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_DELTA_H_

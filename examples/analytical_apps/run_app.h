@@ -45,11 +45,12 @@ limitations under the License.
 #include "lcc/lcc.h"
 #include "lcc/lcc_auto.h"
 #include "pagerank/pagerank.h"
+#include "pagerank/pagerank_async.h"
 #include "pagerank/pagerank_auto.h"
-#include "pagerank/pagerank_delta.h"
 #include "pagerank/pagerank_local.h"
 #include "pagerank/pagerank_local_parallel.h"
 #include "pagerank/pagerank_parallel.h"
+#include "pagerank/pagerank_sync.h"
 #include "sssp/sssp.h"
 #include "sssp/sssp_auto.h"
 #include "sssp/sssp_serial.h"
@@ -235,11 +236,18 @@ void Run() {
     } else if (name == "pagerank_delta") {
       using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
                                                  LoadStrategy::kOnlyOut>;
-      using AppType = PageRankDelta<GraphType>;
+      using AppType = PageRankSync<GraphType>;
       CreateAndQuery<GraphType, AppType, double, int>(
           comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
           FLAGS_pr_mr, FLAGS_pr_delta_sum);
-    } else if (name == "cdlp_auto") {
+    }else if (name == "pagerank_async") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = PageRankAsync<GraphType>;
+      CreateAndQuery<GraphType, AppType, double, int>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
+          FLAGS_pr_mr, FLAGS_pr_delta_sum);
+    }  else if (name == "cdlp_auto") {
       using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
                                                  LoadStrategy::kBothOutIn>;
       using AppType = CDLPAuto<GraphType>;

@@ -1,7 +1,7 @@
 
 
-#ifndef LIBGRAPE_LITE_EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_DELTA_CONTEXT_H_
-#define LIBGRAPE_LITE_EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_DELTA_CONTEXT_H_
+#ifndef LIBGRAPE_LITE_EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_SYNC_CONTEXT_H_
+#define LIBGRAPE_LITE_EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_SYNC_CONTEXT_H_
 
 #include <grape/grape.h>
 
@@ -14,7 +14,7 @@ namespace grape {
  * @tparam FRAG_T
  */
 template <typename FRAG_T>
-class PageRanDeltaContext : public ContextBase<FRAG_T> {
+class PageRankSyncContext : public ContextBase<FRAG_T> {
  public:
   using oid_t = typename FRAG_T::oid_t;
   using vid_t = typename FRAG_T::vid_t;
@@ -54,4 +54,4 @@ class PageRanDeltaContext : public ContextBase<FRAG_T> {
   double delta_sum_threshold;
 };
 }  // namespace grape
-#endif  // LIBGRAPE_LITE_EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_DELTA_CONTEXT_H_
+#endif  // LIBGRAPE_LITE_EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_SYNC_CONTEXT_H_
