@@ -29,6 +29,7 @@ DECLARE_int64(bfs_source);
 DECLARE_int64(sssp_source);
 DECLARE_double(pr_d);
 DECLARE_int32(pr_mr);
+DECLARE_bool(pr_dangling_cycle);
 DECLARE_double(pr_delta_sum);
 DECLARE_int32(cdlp_mr);
 

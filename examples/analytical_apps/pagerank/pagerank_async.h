@@ -6,7 +6,6 @@
 #include <grape/grape.h>
 
 #include "pagerank/pagerank_async_context.h"
-#define DANGLING_SELF_CYCLE
 
 namespace grape {
 /**
@@ -32,9 +31,8 @@ class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
     auto outer_vertices = frag.OuterVertices();
 
     ctx.step = 0;
-#ifndef DANGLING_SELF_CYCLE
     double dangling_sum = 0.0;
-#endif
+
     for (auto& u : inner_vertices) {
       auto oe = frag.GetOutgoingAdjList(u);
       int out_degree = oe.Size();
@@ -49,11 +47,21 @@ class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
           ctx.delta[v] += ctx.dumpling_factor * delta / out_degree;
         }
       } else {
-#ifdef DANGLING_SELF_CYCLE
-        ctx.delta[u] += ctx.dumpling_factor * delta;
-#else
-        dangling_sum += delta;
-#endif
+        if (ctx.dangling_cycle) {
+          ctx.delta[u] += ctx.dumpling_factor * delta;
+        } else {
+          dangling_sum += delta;
+        }
+      }
+    }
+
+    if (!ctx.dangling_cycle) {
+      double total_dangling_sum = 0;
+      Sum(dangling_sum, total_dangling_sum);
+
+      for (auto& u : inner_vertices) {
+        ctx.delta[u] += ctx.dumpling_factor * total_dangling_sum /
+                        frag.GetTotalVerticesNum();
       }
     }
 
@@ -63,15 +71,6 @@ class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
       ctx.delta[u] = 0;
     }
 
-#ifndef DANGLING_SELF_CYCLE
-    double total_dangling_sum = 0;
-    Sum(dangling_sum, total_dangling_sum);
-
-    for (auto& u : inner_vertices) {
-      ctx.delta[u] +=
-          ctx.dumpling_factor * total_dangling_sum / frag.GetTotalVerticesNum();
-    }
-#endif
     if (frag.fnum() == 1) {
       messages.ForceContinue();
     }
@@ -101,9 +100,7 @@ class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
       return;
     }
 
-#ifndef DANGLING_SELF_CYCLE
     double dangling_sum = 0.0;
-#endif
     for (auto& u : inner_vertices) {
       auto oe = frag.GetOutgoingAdjList(u);
       int out_degree = oe.Size();
@@ -118,26 +115,29 @@ class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
           ctx.delta[v] += ctx.dumpling_factor * delta / out_degree;
         }
       } else {
-#ifdef DANGLING_SELF_CYCLE
-        ctx.delta[u] += ctx.dumpling_factor * delta;
-#else
-        dangling_sum += delta;
-#endif
+        if (ctx.dangling_cycle) {
+          ctx.delta[u] += ctx.dumpling_factor * delta;
+        } else {
+          dangling_sum += delta;
+        }
       }
     }
+
+    if (!ctx.dangling_cycle) {
+      double total_dangling_sum = 0;
+      Sum(dangling_sum, total_dangling_sum);
+
+      for (auto& u : inner_vertices) {
+        ctx.delta[u] += ctx.dumpling_factor * total_dangling_sum /
+                        frag.GetTotalVerticesNum();
+      }
+    }
+
     for (auto& u : outer_vertices) {
-      messages.SyncStateOnOuterVertex(frag, u, ctx.delta[u]);
+      messages.SyncStateOnOuterVertex<fragment_t, double>(frag, u,
+                                                          ctx.delta[u]);
       ctx.delta[u] = 0;
     }
-#ifndef DANGLING_SELF_CYCLE
-    double total_dangling_sum = 0;
-    Sum(dangling_sum, total_dangling_sum);
-
-    for (auto& u : inner_vertices) {
-      ctx.delta[u] +=
-          ctx.dumpling_factor * total_dangling_sum / frag.GetTotalVerticesNum();
-    }
-#endif
 
     ctx.step++;
     if (frag.fnum() == 1) {

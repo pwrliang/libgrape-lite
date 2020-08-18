@@ -240,21 +240,21 @@ void Run() {
       using AppType = PageRankSync<GraphType>;
       CreateAndQuery<GraphType, AppType, double, int>(
           comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
-          FLAGS_pr_mr, FLAGS_pr_delta_sum);
+          FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
     } else if (name == "pagerank_async") {
       using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
                                                  LoadStrategy::kOnlyOut>;
       using AppType = PageRankAsync<GraphType>;
       CreateAndQuery<GraphType, AppType, double, int>(
           comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
-          FLAGS_pr_mr, FLAGS_pr_delta_sum);
+          FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
     } else if (name == "pagerank_async_parallel") {
       using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
                                                  LoadStrategy::kOnlyOut>;
       using AppType = PageRankAsyncParallel<GraphType>;
       CreateAndQuery<GraphType, AppType, double, int>(
           comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
-          FLAGS_pr_mr, FLAGS_pr_delta_sum);
+          FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
     } else if (name == "cdlp_auto") {
       using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
                                                  LoadStrategy::kBothOutIn>;

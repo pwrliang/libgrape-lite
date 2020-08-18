@@ -32,6 +32,8 @@ DEFINE_int64(sssp_source, 0, "source vertex of sssp.");
 DEFINE_double(pr_d, 0.85, "damping_factor of pagerank");
 DEFINE_int32(pr_mr, 10, "max rounds of pagerank");
 DEFINE_double(pr_delta_sum, 0.0001, "delta sum of delta-based pagerank");
+DEFINE_bool(pr_dangling_cycle, false, "send delta to dangling vertex itself");
+
 
 DEFINE_bool(segmented_partition, true,
             "whether to use segmented partitioning.");

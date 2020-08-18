@@ -1,11 +1,9 @@
-#ifndef EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_DELTA_H_
-#define EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_DELTA_H_
+#ifndef EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_SYNC_H_
+#define EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_SYNC_H_
 
 #include <grape/grape.h>
 
 #include "pagerank/pagerank_sync_context.h"
-
-#define DANGLING_SELF_CYCLE
 
 namespace grape {
 /**
@@ -15,7 +13,7 @@ namespace grape {
  */
 template <typename FRAG_T>
 class PageRankSync : public AppBase<FRAG_T, PageRankSyncContext<FRAG_T>>,
-                      public Communicator {
+                     public Communicator {
  public:
   INSTALL_DEFAULT_WORKER(PageRankSync<FRAG_T>, PageRankSyncContext<FRAG_T>,
                          FRAG_T)
@@ -32,9 +30,8 @@ class PageRankSync : public AppBase<FRAG_T, PageRankSyncContext<FRAG_T>>,
 
     ctx.step = 0;
 
-#ifndef DANGLING_SELF_CYCLE
     double dangling_sum = 0.0;
-#endif
+
     for (auto& u : inner_vertices) {
       auto oe = frag.GetOutgoingAdjList(u);
       auto out_degree = oe.Size();
@@ -49,21 +46,23 @@ class PageRankSync : public AppBase<FRAG_T, PageRankSyncContext<FRAG_T>>,
           ctx.delta_next[v] += ctx.dumpling_factor * delta / out_degree;
         }
       } else {
-#ifdef DANGLING_SELF_CYCLE
-        ctx.delta_next[u] += ctx.dumpling_factor * delta;
-#else
-        dangling_sum += delta;
-#endif
+        if (ctx.dangling_cycle) {
+          ctx.delta_next[u] += ctx.dumpling_factor * delta;
+        } else {
+          dangling_sum += delta;
+        }
       }
     }
-#ifndef DANGLING_SELF_CYCLE
-    double total_dangling_sum = 0;
-    Sum(dangling_sum, total_dangling_sum);
 
-    for (auto& u : inner_vertices) {
-      ctx.delta_next[u] += ctx.dumpling_factor * total_dangling_sum / frag.GetTotalVerticesNum();
+    if (!ctx.dangling_cycle) {
+      double total_dangling_sum = 0;
+      Sum(dangling_sum, total_dangling_sum);
+
+      for (auto& u : inner_vertices) {
+        ctx.delta_next[u] += ctx.dumpling_factor * total_dangling_sum /
+                             frag.GetTotalVerticesNum();
+      }
     }
-#endif
 
     for (auto& u : outer_vertices) {
       messages.SyncStateOnOuterVertex<fragment_t, double>(frag, u,
@@ -102,9 +101,8 @@ class PageRankSync : public AppBase<FRAG_T, PageRankSyncContext<FRAG_T>>,
 
     ctx.delta_next.Swap(ctx.delta);
 
-#ifndef DANGLING_SELF_CYCLE
     double dangling_sum = 0.0;
-#endif
+
     for (auto& u : inner_vertices) {
       auto oe = frag.GetOutgoingAdjList(u);
       auto out_degree = oe.Size();
@@ -119,22 +117,23 @@ class PageRankSync : public AppBase<FRAG_T, PageRankSyncContext<FRAG_T>>,
           ctx.delta_next[v] += ctx.dumpling_factor * delta / out_degree;
         }
       } else {
-#ifdef DANGLING_SELF_CYCLE
-        ctx.delta_next[u] += ctx.dumpling_factor * delta;
-#else
-        dangling_sum += delta;
-#endif
+        if (ctx.dangling_cycle) {
+          ctx.delta_next[u] += ctx.dumpling_factor * delta;
+        } else {
+          dangling_sum += delta;
+        }
       }
     }
 
-#ifndef DANGLING_SELF_CYCLE
-    double total_dangling_sum = 0;
-    Sum(dangling_sum, total_dangling_sum);
+    if (!ctx.dangling_cycle) {
+      double total_dangling_sum = 0;
+      Sum(dangling_sum, total_dangling_sum);
 
-    for (auto& u : inner_vertices) {
-      ctx.delta_next[u] += ctx.dumpling_factor * total_dangling_sum / frag.GetTotalVerticesNum();
+      for (auto& u : inner_vertices) {
+        ctx.delta_next[u] += ctx.dumpling_factor * total_dangling_sum /
+            frag.GetTotalVerticesNum();
+      }
     }
-#endif
 
     for (auto& u : outer_vertices) {
       messages.SyncStateOnOuterVertex(frag, u, ctx.delta_next[u]);
@@ -150,4 +149,4 @@ class PageRankSync : public AppBase<FRAG_T, PageRankSyncContext<FRAG_T>>,
 
 }  // namespace grape
 
-#endif  // EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_DELTA_H_
+#endif  // EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_SYNC_H_

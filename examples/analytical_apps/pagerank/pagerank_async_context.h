@@ -20,13 +20,14 @@ class PageRankAsyncContext : public ContextBase<FRAG_T> {
   using vid_t = typename FRAG_T::vid_t;
 
   void Init(const FRAG_T& frag, DefaultMessageManager& messages,
-            double dumpling_factor, int max_round, double delta_sum_threshold) {
+            double dumpling_factor, int max_round, double delta_sum_threshold, bool dangling_cycle) {
     auto vertices = frag.Vertices();
     auto inner_vertices = frag.InnerVertices();
 
     this->dumpling_factor = dumpling_factor;
     this->max_round = max_round;
     this->delta_sum_threshold = delta_sum_threshold;
+    this->dangling_cycle = dangling_cycle;
 
     value.Init(inner_vertices, 0);
     delta.Init(vertices, 0);
@@ -51,6 +52,7 @@ class PageRankAsyncContext : public ContextBase<FRAG_T> {
   int max_round = 0;
   double dumpling_factor;
   double delta_sum_threshold;
+  bool dangling_cycle;
 };
 }  // namespace grape
 #endif  // EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_ASYNC_CONTEXT_H_

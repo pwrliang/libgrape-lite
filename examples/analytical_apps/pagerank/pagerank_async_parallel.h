@@ -6,7 +6,6 @@
 #include <grape/grape.h>
 
 #include "pagerank/pagerank_async_parallel_context.h"
-#define DANGLING_SELF_CYCLE
 
 namespace grape {
 /**
@@ -51,22 +50,23 @@ class PageRankAsyncParallel
           atomic_add(ctx.delta[v], ctx.dumpling_factor * delta / out_degree);
         }
       } else {
-#ifdef DANGLING_SELF_CYCLE
-        atomic_add(ctx.delta[u], ctx.dumpling_factor * delta);
-#else
-        atomic_add(dangling_sum, delta);
-#endif
+        if (ctx.dangling_cycle) {
+          atomic_add(ctx.delta[u], ctx.dumpling_factor * delta);
+        } else {
+          atomic_add(dangling_sum, delta);
+        }
       }
     });
-#ifndef DANGLING_SELF_CYCLE
-    double total_dangling_sum = 0;
-    Sum(dangling_sum, total_dangling_sum);
 
-    for (auto& u : inner_vertices) {
-      ctx.delta[u] +=
-          ctx.dumpling_factor * total_dangling_sum / frag.GetTotalVerticesNum();
+    if (!ctx.dangling_cycle) {
+      double total_dangling_sum = 0;
+      Sum(dangling_sum, total_dangling_sum);
+
+      for (auto& u : inner_vertices) {
+        ctx.delta[u] += ctx.dumpling_factor * total_dangling_sum /
+                        frag.GetTotalVerticesNum();
+      }
     }
-#endif
 
     ForEach(outer_vertices, [&frag, &ctx, &channels](int tid, vertex_t u) {
       channels[tid].SyncStateOnOuterVertex<fragment_t, double>(frag, u,
@@ -118,22 +118,23 @@ class PageRankAsyncParallel
           atomic_add(ctx.delta[v], ctx.dumpling_factor * delta / out_degree);
         }
       } else {
-#ifdef DANGLING_SELF_CYCLE
-        atomic_add(ctx.delta[u], ctx.dumpling_factor * delta);
-#else
-        atomic_add(dangling_sum, delta);
-#endif
+        if (ctx.dangling_cycle) {
+          atomic_add(ctx.delta[u], ctx.dumpling_factor * delta);
+        } else {
+          atomic_add(dangling_sum, delta);
+        }
       }
     });
-#ifndef DANGLING_SELF_CYCLE
-    double total_dangling_sum = 0;
-    Sum(dangling_sum, total_dangling_sum);
 
-    for (auto& u : inner_vertices) {
-      ctx.delta[u] +=
-          ctx.dumpling_factor * total_dangling_sum / frag.GetTotalVerticesNum();
+    if (!ctx.dangling_cycle) {
+      double total_dangling_sum = 0;
+      Sum(dangling_sum, total_dangling_sum);
+
+      for (auto& u : inner_vertices) {
+        ctx.delta[u] += ctx.dumpling_factor * total_dangling_sum /
+            frag.GetTotalVerticesNum();
+      }
     }
-#endif
 
     ForEach(outer_vertices, [&frag, &ctx, &channels](int tid, vertex_t u) {
       channels[tid].SyncStateOnOuterVertex<fragment_t, double>(frag, u,
