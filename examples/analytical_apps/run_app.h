@@ -52,6 +52,7 @@ limitations under the License.
 #include "pagerank/pagerank_local_parallel.h"
 #include "pagerank/pagerank_parallel.h"
 #include "pagerank/pagerank_sync.h"
+#include "pagerank/pagerank_sync_send_msg.h"
 #include "sssp/sssp.h"
 #include "sssp/sssp_auto.h"
 #include "sssp/sssp_serial.h"
@@ -238,21 +239,29 @@ void Run() {
       using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
                                                  LoadStrategy::kOnlyOut>;
       using AppType = PageRankSync<GraphType>;
-      CreateAndQuery<GraphType, AppType, double, int>(
+      CreateAndQuery<GraphType, AppType, double, int, double, bool>(
           comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
           FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
-    } else if (name == "pagerank_async") {
+    } else if (name == "pagerank_sync_send_msg") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kBothOutIn>;
+      using AppType = PageRankSyncSendMsg<GraphType>;
+      CreateAndQuery<GraphType, AppType, double, int, double, bool>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
+          FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
+    }
+    else if (name == "pagerank_async") {
       using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
                                                  LoadStrategy::kOnlyOut>;
       using AppType = PageRankAsync<GraphType>;
-      CreateAndQuery<GraphType, AppType, double, int>(
+      CreateAndQuery<GraphType, AppType, double, int, double, bool>(
           comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
           FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
     } else if (name == "pagerank_async_parallel") {
       using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
                                                  LoadStrategy::kOnlyOut>;
       using AppType = PageRankAsyncParallel<GraphType>;
-      CreateAndQuery<GraphType, AppType, double, int>(
+      CreateAndQuery<GraphType, AppType, double, int, double, bool>(
           comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
           FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
     } else if (name == "cdlp_auto") {
