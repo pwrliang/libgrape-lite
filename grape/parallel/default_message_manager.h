@@ -90,6 +90,11 @@ class DefaultMessageManager : public MessageManagerBase {
       return;
     }
 
+    // 假设fid_ = 1, src_fid = 0,2,3
+    // 0*4 + 1, 2*4 + 1, 3*4 + 1 -> 1, 9, 13
+    // 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+    // 0 1 2 3 0 1 2 3 0 1 2  3  0  1  2  3
+    // 获取除了自身之外的worker发送给本worker的len
     for (fid_t i = 1; i < fnum_; ++i) {
       fid_t src_fid = (fid_ + i) % fnum_;
       size_t length = lengths_in_[src_fid * fnum_ + fid_];

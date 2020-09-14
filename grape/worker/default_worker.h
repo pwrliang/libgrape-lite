@@ -1,7 +1,7 @@
 /* Copyright 2019 Alibaba Group Holding Limited. */
 
-#ifndef APPS_DEFAULT_WORKER_H_
-#define APPS_DEFAULT_WORKER_H_
+#ifndef GRAPE_WORKER_DEFAULT_WORKER_H_
+#define GRAPE_WORKER_DEFAULT_WORKER_H_
 
 #include <map>
 #include <memory>
@@ -126,4 +126,4 @@ class DefaultWorker {
 
 }  // namespace grape
 
-#endif  // APPS_DEFAULT_WORKER_H_
+#endif  // GRAPE_WORKER_DEFAULT_WORKER_H_
