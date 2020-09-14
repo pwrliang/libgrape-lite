@@ -43,4 +43,6 @@ DECLARE_string(serialization_prefix);
 
 DECLARE_int32(app_concurrency);
 
+DECLARE_bool(debug);
+
 #endif  // EXAMPLES_ANALYTICAL_APPS_FLAGS_H_
