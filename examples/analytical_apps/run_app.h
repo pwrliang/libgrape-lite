@@ -170,146 +170,140 @@ void Run() {
   }
   int fnum = comm_spec.fnum();
   std::string name = FLAGS_application;
-  using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-                                             LoadStrategy::kOnlyOut>;
-  using AppType = PageRankAsync<GraphType>;
-  CreateAndQuery<GraphType, AppType, double, int, double, bool>(
-      comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
-      FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
-//  if (name.find("sssp") != std::string::npos) {
-//    using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, double>;
-//    if (name == "sssp_auto") {
-//      using AppType = SSSPAuto<GraphType>;
-//      CreateAndQuery<GraphType, AppType, OID_T>(
-//          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_sssp_source);
-//    } else if (name == "sssp") {
-//      using AppType = SSSP<GraphType>;
-//      CreateAndQuery<GraphType, AppType, OID_T>(
-//          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_sssp_source);
-//    } else if (name == "sssp_serial") {
-//      using AppType = SSSPSerial<GraphType>;
-//      CreateAndQuery<GraphType, AppType, OID_T>(
-//          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_sssp_source);
-//    } else {
-//      LOG(FATAL) << "No avaiable application named [" << name << "].";
-//    }
-//  } else {
-//    if (name == "bfs_auto") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kOnlyOut>;
-//      using AppType = BFSAuto<GraphType>;
-//      CreateAndQuery<GraphType, AppType, OID_T>(
-//          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_bfs_source);
-//    } else if (name == "bfs") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kOnlyOut>;
-//      using AppType = BFS<GraphType>;
-//      CreateAndQuery<GraphType, AppType, OID_T>(
-//          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_bfs_source);
-//    } else if (name == "pagerank_local") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kOnlyOut>;
-//      using AppType = PageRankLocal<GraphType>;
-//      CreateAndQuery<GraphType, AppType, double, int>(comm_spec, efile, vfile,
-//                                                      out_prefix, fnum, spec,
-//                                                      FLAGS_pr_d, FLAGS_pr_mr);
-//    } else if (name == "pagerank_local_parallel") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kBothOutIn>;
-//      using AppType = PageRankLocalParallel<GraphType>;
-//      CreateAndQuery<GraphType, AppType, double, int>(comm_spec, efile, vfile,
-//                                                      out_prefix, fnum, spec,
-//                                                      FLAGS_pr_d, FLAGS_pr_mr);
-//    } else if (name == "pagerank_auto") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kBothOutIn>;
-//      using AppType = PageRankAuto<GraphType>;
-//      CreateAndQuery<GraphType, AppType, double, int>(comm_spec, efile, vfile,
-//                                                      out_prefix, fnum, spec,
-//                                                      FLAGS_pr_d, FLAGS_pr_mr);
-//    } else if (name == "pagerank") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kOnlyOut>;
-//      using AppType = PageRank<GraphType>;
-//      CreateAndQuery<GraphType, AppType, double, int>(comm_spec, efile, vfile,
-//                                                      out_prefix, fnum, spec,
-//                                                      FLAGS_pr_d, FLAGS_pr_mr);
-//    } else if (name == "pagerank_parallel") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kBothOutIn>;
-//      using AppType = PageRankParallel<GraphType>;
-//      CreateAndQuery<GraphType, AppType, double, int>(comm_spec, efile, vfile,
-//                                                      out_prefix, fnum, spec,
-//                                                      FLAGS_pr_d, FLAGS_pr_mr);
-//    } else if (name == "pagerank_sync") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kOnlyOut>;
-//      using AppType = PageRankSync<GraphType>;
-//      CreateAndQuery<GraphType, AppType, double, int, double, bool>(
-//          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
-//          FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
-//    } else if (name == "pagerank_sync_send_msg") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kBothOutIn>;
-//      using AppType = PageRankSyncSendMsg<GraphType>;
-//      CreateAndQuery<GraphType, AppType, double, int, double, bool>(
-//          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
-//          FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
-//    }
-//    else if (name == "pagerank_async") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kOnlyOut>;
-//      using AppType = PageRankAsync<GraphType>;
-//      CreateAndQuery<GraphType, AppType, double, int, double, bool>(
-//          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
-//          FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
-//    } else if (name == "pagerank_async_parallel") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kOnlyOut>;
-//      using AppType = PageRankAsyncParallel<GraphType>;
-//      CreateAndQuery<GraphType, AppType, double, int, double, bool>(
-//          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
-//          FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
-//    } else if (name == "cdlp_auto") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kBothOutIn>;
-//      using AppType = CDLPAuto<GraphType>;
-//      CreateAndQuery<GraphType, AppType, int>(
-//          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_cdlp_mr);
-//    } else if (name == "cdlp") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kOnlyOut>;
-//      using AppType = CDLP<GraphType>;
-//      CreateAndQuery<GraphType, AppType, int>(
-//          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_cdlp_mr);
-//    } else if (name == "wcc_auto") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kOnlyOut>;
-//      using AppType = WCCAuto<GraphType>;
-//      CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
-//                                         fnum, spec);
-//    } else if (name == "wcc") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kOnlyOut>;
-//      using AppType = WCC<GraphType>;
-//      CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
-//                                         fnum, spec);
-//    } else if (name == "lcc_auto") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kOnlyOut>;
-//      using AppType = LCCAuto<GraphType>;
-//      CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
-//                                         fnum, spec);
-//    } else if (name == "lcc") {
-//      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-//                                                 LoadStrategy::kOnlyOut>;
-//      using AppType = LCC<GraphType>;
-//      CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
-//                                         fnum, spec);
-//    } else {
-//      LOG(FATAL) << "No avaiable application named [" << name << "].";
-//    }
-//  }
+  if (name.find("sssp") != std::string::npos) {
+    using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, double>;
+    if (name == "sssp_auto") {
+      using AppType = SSSPAuto<GraphType>;
+      CreateAndQuery<GraphType, AppType, OID_T>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_sssp_source);
+    } else if (name == "sssp") {
+      using AppType = SSSP<GraphType>;
+      CreateAndQuery<GraphType, AppType, OID_T>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_sssp_source);
+    } else if (name == "sssp_serial") {
+      using AppType = SSSPSerial<GraphType>;
+      CreateAndQuery<GraphType, AppType, OID_T>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_sssp_source);
+    } else {
+      LOG(FATAL) << "No avaiable application named [" << name << "].";
+    }
+  } else {
+    if (name == "bfs_auto") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = BFSAuto<GraphType>;
+      CreateAndQuery<GraphType, AppType, OID_T>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_bfs_source);
+    } else if (name == "bfs") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = BFS<GraphType>;
+      CreateAndQuery<GraphType, AppType, OID_T>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_bfs_source);
+    } else if (name == "pagerank_local") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = PageRankLocal<GraphType>;
+      CreateAndQuery<GraphType, AppType, double, int>(comm_spec, efile, vfile,
+                                                      out_prefix, fnum, spec,
+                                                      FLAGS_pr_d, FLAGS_pr_mr);
+    } else if (name == "pagerank_local_parallel") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kBothOutIn>;
+      using AppType = PageRankLocalParallel<GraphType>;
+      CreateAndQuery<GraphType, AppType, double, int>(comm_spec, efile, vfile,
+                                                      out_prefix, fnum, spec,
+                                                      FLAGS_pr_d, FLAGS_pr_mr);
+    } else if (name == "pagerank_auto") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kBothOutIn>;
+      using AppType = PageRankAuto<GraphType>;
+      CreateAndQuery<GraphType, AppType, double, int>(comm_spec, efile, vfile,
+                                                      out_prefix, fnum, spec,
+                                                      FLAGS_pr_d, FLAGS_pr_mr);
+    } else if (name == "pagerank") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = PageRank<GraphType>;
+      CreateAndQuery<GraphType, AppType, double, int>(comm_spec, efile, vfile,
+                                                      out_prefix, fnum, spec,
+                                                      FLAGS_pr_d, FLAGS_pr_mr);
+    } else if (name == "pagerank_parallel") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kBothOutIn>;
+      using AppType = PageRankParallel<GraphType>;
+      CreateAndQuery<GraphType, AppType, double, int>(comm_spec, efile, vfile,
+                                                      out_prefix, fnum, spec,
+                                                      FLAGS_pr_d, FLAGS_pr_mr);
+    } else if (name == "pagerank_sync") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = PageRankSync<GraphType>;
+      CreateAndQuery<GraphType, AppType, double, int, double, bool>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
+          FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
+    } else if (name == "pagerank_sync_send_msg") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kBothOutIn>;
+      using AppType = PageRankSyncSendMsg<GraphType>;
+      CreateAndQuery<GraphType, AppType, double, int, double, bool>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
+          FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
+    }
+    else if (name == "pagerank_async") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = PageRankAsync<GraphType>;
+      CreateAndQuery<GraphType, AppType, double, int, double, bool>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
+          FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
+    } else if (name == "pagerank_async_parallel") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = PageRankAsyncParallel<GraphType>;
+      CreateAndQuery<GraphType, AppType, double, int, double, bool>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_pr_d,
+          FLAGS_pr_mr, FLAGS_pr_delta_sum, FLAGS_pr_dangling_cycle);
+    } else if (name == "cdlp_auto") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kBothOutIn>;
+      using AppType = CDLPAuto<GraphType>;
+      CreateAndQuery<GraphType, AppType, int>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_cdlp_mr);
+    } else if (name == "cdlp") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = CDLP<GraphType>;
+      CreateAndQuery<GraphType, AppType, int>(
+          comm_spec, efile, vfile, out_prefix, fnum, spec, FLAGS_cdlp_mr);
+    } else if (name == "wcc_auto") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = WCCAuto<GraphType>;
+      CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
+                                         fnum, spec);
+    } else if (name == "wcc") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = WCC<GraphType>;
+      CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
+                                         fnum, spec);
+    } else if (name == "lcc_auto") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = LCCAuto<GraphType>;
+      CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
+                                         fnum, spec);
+    } else if (name == "lcc") {
+      using GraphType = ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                                 LoadStrategy::kOnlyOut>;
+      using AppType = LCC<GraphType>;
+      CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
+                                         fnum, spec);
+    } else {
+      LOG(FATAL) << "No avaiable application named [" << name << "].";
+    }
+  }
 #ifdef GRANULA
   granula::operation offloadGraph("grape", "Id.Unique", "OffloadGraph",
                                   "Id.Unique");

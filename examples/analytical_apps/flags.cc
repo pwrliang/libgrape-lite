@@ -48,3 +48,4 @@ DEFINE_string(serialization_prefix, "",
 DEFINE_int32(app_concurrency, -1, "concurrency of application");
 
 DEFINE_bool(debug, false, "");
+DEFINE_double(termcheck_threshold, 1000000000, "");

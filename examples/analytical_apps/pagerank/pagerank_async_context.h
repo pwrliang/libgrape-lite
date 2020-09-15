@@ -19,9 +19,8 @@ class PageRankAsyncContext : public ContextBase<FRAG_T> {
   using oid_t = typename FRAG_T::oid_t;
   using vid_t = typename FRAG_T::vid_t;
 
-  void Init(const FRAG_T& frag, AsyncMessageManager& messages,
-            double dumpling_factor, int max_round, double delta_sum_threshold,
-            bool dangling_cycle) {
+  void Init(const FRAG_T& frag, DefaultMessageManager& messages,
+            double dumpling_factor, int max_round, double delta_sum_threshold, bool dangling_cycle) {
     auto vertices = frag.Vertices();
     auto inner_vertices = frag.InnerVertices();
 
@@ -33,7 +32,7 @@ class PageRankAsyncContext : public ContextBase<FRAG_T> {
     value.Init(inner_vertices, 0);
     delta.Init(vertices, 0);
 
-    for (auto v : inner_vertices) {
+    for(auto v:inner_vertices) {
       delta[v] = (1 - dumpling_factor) / frag.GetTotalVerticesNum();
     }
     step = 0;

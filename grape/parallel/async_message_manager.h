@@ -34,11 +34,11 @@ namespace grape {
  *
  * The send and recv methods are not thread-safe.
  */
-class AsyncMessageManager : public MessageManagerBase {
+class AsyncMessageManager {
  public:
   AsyncMessageManager() : comm_(NULL_COMM) {}
 
-  ~AsyncMessageManager() override {
+  ~AsyncMessageManager() {
     if (ValidComm(comm_)) {
       MPI_Comm_free(&comm_);
     }
@@ -47,25 +47,26 @@ class AsyncMessageManager : public MessageManagerBase {
   /**
    * @brief Inherit
    */
-  void Init(MPI_Comm comm) override {
+  void Init(MPI_Comm comm) {
     MPI_Comm_dup(comm, &comm_);
 
     comm_spec_.Init(comm_);
     fid_ = comm_spec_.fid();
     fnum_ = comm_spec_.fnum();
 
-    to_send_.resize(fnum_);
     to_recv_.SetProducerNum(1);
+    pause_ = false;
+    entered_safe_zone_ = false;
+    sent_size_ = 0;
+    running_ = true;
   }
 
   /**
    * @brief Inherit
    */
-  void Start() override {
-    sent_size_ = 0;
-    force_continue_ = false;
-
+  void Start() {
     do {
+      entered_safe_zone_ = false;
       MPI_Status status;
       int flag;
       MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, comm_, &flag, &status);
@@ -75,8 +76,8 @@ class AsyncMessageManager : public MessageManagerBase {
         auto src_worker = status.MPI_SOURCE;
         MPI_Get_count(&status, MPI_CHAR, &length);
 
-        LOG(INFO) << "recv: " << length;
-
+        CHECK_GT(length, 0);
+        LOG(INFO) << "Len: " << length;
         OutArchive arc(length);
         arc.Allocate(length);
         MPI_Recv(arc.GetBuffer(), length, MPI_CHAR, src_worker, 0, comm_,
@@ -84,64 +85,71 @@ class AsyncMessageManager : public MessageManagerBase {
         to_recv_.Put(std::move(arc));
       }
 
-      std::unique_lock<std::mutex> lk(send_mux_);
-      auto iter = to_send_.begin();
-      while (iter != to_send_.end()) {
-        MPI_Request req;
-        MPI_Isend(iter->second.GetBuffer(), iter->second.GetSize(), MPI_CHAR,
-                  comm_spec_.FragToWorker(iter->first), 0, comm_, &req);
-//        reqs_.emplace_back(req, std::move(iter->second));
-        iter++;
+      if (!pause_) {
+        std::unique_lock<std::mutex> lk(send_mux_);
+        for (auto& e : to_send_) {
+          InArchive arc(std::move(e.second));
+          MPI_Request req;
+
+          MPI_Isend(arc.GetBuffer(), arc.GetSize(), MPI_CHAR,
+                    comm_spec_.FragToWorker(e.first), 0, comm_, &req);
+          // MPI_Isend needs to hold the buffer
+          reqs_.emplace_back(req, std::move(arc));
+        }
+        to_send_.clear();
       }
 
-      //      std::unique_lock<std::mutex> lk(send_mux_);
+      reqs_.erase(
+          std::remove_if(reqs_.begin(), reqs_.end(),
+                         [](std::pair<MPI_Request, InArchive>& e) -> bool {
+                           int flag;
+                           MPI_Test(&e.first, &flag, MPI_STATUSES_IGNORE);
+                           return flag;
+                         }),
+          reqs_.end());
 
-      //      reqs_.erase(std::remove_if(
-      //                      reqs_.begin(), reqs_.end(),
-      //                      [](std::tuple<MPI_Request, fid_t, InArchive>& e)
-      //                      -> bool {
-      //                        auto& req = std::get<0>(e);
-      //                        int flag;
-      //                        MPI_Test(&req, &flag, MPI_STATUSES_IGNORE);
-      //                        return flag;
-      //                      }),
-      //                  reqs_.end());
+      if (reqs_.empty()) {
+        entered_safe_zone_ = true;
 
-    } while (!ToTerminate());
+        // awake pause caller
+        while (pause_) {
+          std::this_thread::yield();
+          std::unique_lock<std::mutex> lk(controller_mux_);
+          wait_to_pause_.notify_one();
+        }
+      }
+    } while (running_);
+    LOG(INFO) << "AsyncMessageManager stopped.";
   }
 
-  /**
-   * @brief Inherit
-   */
-  void StartARound() override {}
+  void Stop() {
+    if (running_) {
+      Pause();
+      running_ = false;
+    }
+  }
+
+  void Pause() {
+    if (running_) {
+      pause_ = true;
+      std::unique_lock<std::mutex> lk(controller_mux_);
+      while (!entered_safe_zone_) {
+        wait_to_pause_.wait(lk);
+      }
+    }
+  }
+
+  void Resume() { pause_ = false; }
 
   /**
    * @brief Inherit
    */
-  void FinishARound() override {}
-
-  /**
-   * @brief Inherit
-   */
-  bool ToTerminate() override { false; }
-
-  /**
-   * @brief Inherit
-   */
-  void Finalize() override {
+  void Finalize() {
     MPI_Comm_free(&comm_);
     comm_ = NULL_COMM;
   }
 
-  /**
-   * @brief Inherit
-   */
-  size_t GetMsgSize() const override { return sent_size_; }
-
-  /**
-   * @brief Inherit
-   */
-  void ForceContinue() override { force_continue_ = true; }
+  size_t GetMsgSize() const { return sent_size_; }
 
   /**
    * @brief Send message to a fragment.
@@ -271,16 +279,12 @@ class AsyncMessageManager : public MessageManagerBase {
    */
   template <typename MESSAGE_T>
   inline bool GetMessage(MESSAGE_T& msg) {
-    //    OutArchive archive;
-    //    {
-    //    std::unique_lock<std::mutex> lk(recv_mux_);
-    //    if (to_recv_.empty())
-    //      return false;
-    //    OutArchive archive = std::move(to_recv_.back());
-    //
-    //    //    }
-    //    archive >> msg;
-    //    to_recv_.pop_back();
+    if (to_recv_.Size() == 0)
+      return false;
+    OutArchive arc;
+    to_recv_.Get(arc);
+
+    arc >> msg;
     return true;
   }
 
@@ -309,18 +313,13 @@ class AsyncMessageManager : public MessageManagerBase {
     return true;
   }
 
- protected:
-  fid_t fid() const { return fid_; }
-  fid_t fnum() const { return fnum_; }
-
  private:
-  void send(fid_t fid, InArchive&& arc) {
+  inline void send(fid_t fid, InArchive&& arc) {
     if (arc.Empty()) {
       return;
     }
 
-    if (fid == fid_) {
-      // self message
+    if (fid == fid_) {  // self message
       OutArchive tmp(std::move(arc));
       to_recv_.Put(tmp);
     } else {
@@ -333,9 +332,12 @@ class AsyncMessageManager : public MessageManagerBase {
   }
 
   std::vector<std::pair<fid_t, InArchive>> to_send_;
-  BlockingQueue<OutArchive> to_recv_;
+  BlockingQueue<OutArchive> to_recv_{};
 
   std::mutex send_mux_;
+  std::mutex controller_mux_;
+
+  std::condition_variable wait_to_pause_;
 
   std::vector<std::pair<MPI_Request, InArchive>> reqs_;
   MPI_Comm comm_;
@@ -345,7 +347,9 @@ class AsyncMessageManager : public MessageManagerBase {
   CommSpec comm_spec_;
 
   size_t sent_size_{};
-  bool force_continue_{};
+  std::atomic_bool pause_{};
+  std::atomic_bool entered_safe_zone_{};
+  std::atomic_bool running_{};
 };
 
 }  // namespace grape

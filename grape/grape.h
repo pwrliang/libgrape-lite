@@ -17,21 +17,19 @@ limitations under the License.
 #define GRAPE_GRAPE_H_
 
 #include "grape/app/app_base.h"
-#include "grape/app/async_app_base.h"
 #include "grape/app/auto_app_base.h"
 #include "grape/app/batch_shuffle_app_base.h"
 #include "grape/app/context_base.h"
 #include "grape/app/parallel_app_base.h"
-#include "grape/parallel/async_message_manager.h"
 #include "grape/parallel/auto_parallel_message_manager.h"
 #include "grape/parallel/batch_shuffle_message_manager.h"
 #include "grape/parallel/default_message_manager.h"
 #include "grape/parallel/parallel_message_manager.h"
 #include "grape/utils/atomic_ops.h"
 #include "grape/utils/vertex_array.h"
+#include "grape/worker/default_worker.h"
 #include "grape/worker/auto_worker.h"
 #include "grape/worker/batch_shuffle_worker.h"
-#include "grape/worker/default_worker.h"
 #include "grape/worker/parallel_worker.h"
 namespace grape {}
 

@@ -14,11 +14,11 @@ namespace grape {
  *  @tparam FRAG_T
  */
 template <typename FRAG_T>
-class PageRankAsync : public AsyncAppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
+class PageRankAsync : public AppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
                       public Communicator {
  public:
-  INSTALL_ASYNC_WORKER(PageRankAsync<FRAG_T>, PageRankAsyncContext<FRAG_T>,
-                       FRAG_T)
+  INSTALL_DEFAULT_WORKER(PageRankAsync<FRAG_T>, PageRankAsyncContext<FRAG_T>,
+                         FRAG_T)
   using vertex_t = typename FRAG_T::vertex_t;
 
   static constexpr MessageStrategy message_strategy =
@@ -87,19 +87,17 @@ class PageRankAsync : public AsyncAppBase<FRAG_T, PageRankAsyncContext<FRAG_T>>,
       ctx.delta[recv_v] += msg;
     }
 
-    if (ctx.step % 5 == 0) {
-      double local_delta_sum = 0;
-      for (auto& u : inner_vertices) {
-        local_delta_sum += ctx.delta[u];
-      }
+    double local_delta_sum = 0;
+    for (auto& u : inner_vertices) {
+      local_delta_sum += ctx.delta[u];
+    }
 
-//      double delta_sum = 0;
-//      Sum(local_delta_sum, delta_sum);
-//
-//      VLOG(1) << "Round: " << ctx.step << " total delta: " << delta_sum;
-//      if (delta_sum < ctx.delta_sum_threshold || ctx.step >= ctx.max_round) {
-////        return;
-//      }
+    double delta_sum = 0;
+    Sum(local_delta_sum, delta_sum);
+
+    VLOG(1) << "Round: " << ctx.step << " total delta: " << delta_sum;
+    if (delta_sum < ctx.delta_sum_threshold || ctx.step >= ctx.max_round) {
+      return;
     }
 
     double dangling_sum = 0.0;

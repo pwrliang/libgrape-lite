@@ -119,6 +119,14 @@ else ()
     set_target_properties(analytical_apps PROPERTIES OUTPUT_NAME run_app)
     target_link_libraries(analytical_apps grape-lite ${MPI_CXX_LIBRARIES}
             ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${CMAKE_DL_LIBS})
+
+    add_executable(maiter examples/analytical_apps/flags.cc
+            examples/analytical_apps/maiter.cc)
+    target_include_directories(maiter PRIVATE
+            examples/analytical_apps)
+    set_target_properties(maiter PROPERTIES OUTPUT_NAME maiter)
+    target_link_libraries(maiter grape-lite ${MPI_CXX_LIBRARIES}
+            ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${CMAKE_DL_LIBS})
 endif ()
 
 if (NOT GFLAGS_FOUND)
@@ -132,7 +140,7 @@ else ()
             examples/gnn_sampler
             examples/gnn_sampler/thirdparty
             ${RDKAFKA_INCLUDE_DIR})
-    target_link_libraries(gnn_sampler grape-lite  ${MPI_CXX_LIBRARIES}
+    target_link_libraries(gnn_sampler grape-lite ${MPI_CXX_LIBRARIES}
             ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${CMAKE_DL_LIBS} ${RDKAFKA_LIBRARIES})
 endif ()
 
