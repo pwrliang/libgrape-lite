@@ -44,7 +44,7 @@ class ISyncBuffer {
 };
 
 /**
- * @brief SyncBuffer manages status on each vertex during the evaluation in auto
+ * @brief SyncBuffer manages manager_status_ on each vertex during the evaluation in auto
  * parallization.
  *
  * @tparam T

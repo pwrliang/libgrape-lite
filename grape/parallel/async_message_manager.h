@@ -28,6 +28,7 @@ limitations under the License.
 #include "grape/worker/comm_spec.h"
 
 namespace grape {
+enum ManagerStatus { STOPPED, RUNNING, PAUSING, PAUSED };
 
 /**
  * @brief Default message manager.
@@ -55,16 +56,16 @@ class AsyncMessageManager {
     fnum_ = comm_spec_.fnum();
 
     to_recv_.SetProducerNum(1);
-    pause_ = false;
     entered_safe_zone_ = false;
     sent_size_ = 0;
-    running_ = true;
+    manager_status_.store(ManagerStatus::STOPPED);
   }
 
   /**
    * @brief Inherit
    */
   void Start() {
+    manager_status_.store(ManagerStatus::RUNNING);
     do {
       entered_safe_zone_ = false;
       MPI_Status status;
@@ -77,15 +78,13 @@ class AsyncMessageManager {
         MPI_Get_count(&status, MPI_CHAR, &length);
 
         CHECK_GT(length, 0);
-        LOG(INFO) << "Len: " << length;
         OutArchive arc(length);
-        arc.Allocate(length);
         MPI_Recv(arc.GetBuffer(), length, MPI_CHAR, src_worker, 0, comm_,
                  MPI_STATUS_IGNORE);
         to_recv_.Put(std::move(arc));
       }
 
-      if (!pause_) {
+      if (manager_status_.load() != ManagerStatus::PAUSING) {
         std::unique_lock<std::mutex> lk(send_mux_);
         for (auto& e : to_send_) {
           InArchive arc(std::move(e.second));
@@ -112,34 +111,38 @@ class AsyncMessageManager {
         entered_safe_zone_ = true;
 
         // awake pause caller
-        while (pause_) {
+        while (manager_status_.load() == ManagerStatus::PAUSING ||
+               manager_status_.load() == ManagerStatus::PAUSED) {
+          if (manager_status_.load() == ManagerStatus::PAUSING) {
+            std::unique_lock<std::mutex> lk(controller_mux_);
+            wait_to_pause_.notify_all();
+          }
           std::this_thread::yield();
-          std::unique_lock<std::mutex> lk(controller_mux_);
-          wait_to_pause_.notify_one();
         }
       }
-    } while (running_);
+    } while (manager_status_.load() != ManagerStatus::STOPPED);
     LOG(INFO) << "AsyncMessageManager stopped.";
   }
 
   void Stop() {
-    if (running_) {
+    if (manager_status_.load() == ManagerStatus::RUNNING) {
       Pause();
-      running_ = false;
+      manager_status_.store(ManagerStatus::STOPPED);
     }
   }
 
   void Pause() {
-    if (running_) {
-      pause_ = true;
+    if (manager_status_.load() == ManagerStatus::RUNNING) {
+      manager_status_.store(ManagerStatus::PAUSING);
       std::unique_lock<std::mutex> lk(controller_mux_);
       while (!entered_safe_zone_) {
         wait_to_pause_.wait(lk);
       }
+      manager_status_.store(ManagerStatus::PAUSED);
     }
   }
 
-  void Resume() { pause_ = false; }
+  void Resume() { manager_status_.store(ManagerStatus::RUNNING); }
 
   /**
    * @brief Inherit
@@ -167,12 +170,12 @@ class AsyncMessageManager {
   }
 
   /**
-   * @brief Communication by synchronizing the status on outer vertices, for
-   * edge-cut fragments.
+   * @brief Communication by synchronizing the manager_status_ on outer
+   * vertices, for edge-cut fragments.
    *
    * Assume a fragment F_1, a crossing edge a->b' in F_1 and a is an inner
-   * vertex in F_1. This function invoked on F_1 send status on b' to b on F_2,
-   * where b is an inner vertex.
+   * vertex in F_1. This function invoked on F_1 send manager_status_ on b' to b
+   * on F_2, where b is an inner vertex.
    *
    * @tparam GRAPH_T
    * @tparam MESSAGE_T
@@ -347,9 +350,8 @@ class AsyncMessageManager {
   CommSpec comm_spec_;
 
   size_t sent_size_{};
-  std::atomic_bool pause_{};
+  std::atomic_int manager_status_{};
   std::atomic_bool entered_safe_zone_{};
-  std::atomic_bool running_{};
 };
 
 }  // namespace grape

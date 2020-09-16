@@ -173,3 +173,10 @@ add_custom_target(doc COMMAND doxygen "${CMAKE_SOURCE_DIR}/misc/doc-config"
         COMMENT "Generating docs."
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         VERBATIM)
+if (APPLE)
+    add_custom_command(TARGET maiter POST_BUILD
+            COMMAND bash -c "find . -name \\*.gcda -print0 | xargs -0 rm"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Deleting .gcda files"
+            VERBATIM)
+endif ()

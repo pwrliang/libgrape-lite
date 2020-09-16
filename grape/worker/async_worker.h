@@ -95,18 +95,20 @@ class AsyncWorker {
         vertex_t v;
         value_t received_delta;
         while (messages_.GetMessage(*graph_, v, received_delta)) {
+          LOG(INFO) << "recv: " << received_delta;
           app_->accumulate(app_->deltas_[v], received_delta);
         }
       }
 
       // collect new messages
       for (auto u : inner_vertices) {
-        auto value = values[u];
-        auto delta = deltas[u];
+        auto& value = values[u];
+        auto& delta = deltas[u];
         auto oes = graph_->GetOutgoingAdjList(u);
 
-        deltas[u] = app_->default_v();  // clear delta
+        app_->accumulate(value, delta);
         app_->g_function(u, value, delta, oes, output);
+        delta = app_->default_v();  // clear delta
 
         for (auto& e : output) {
           auto v = e.first;
@@ -119,17 +121,18 @@ class AsyncWorker {
                 *graph_, v, delta_to_send);
           }
         }
+
         output.clear();
       }
 
-      if (comm_spec_.worker_id() == kCoordinatorRank) {
-        VLOG(1) << "[Coordinator]: Finished IterateKernel - " << step;
-      }
+      VLOG(1) << "[Worker " << comm_spec_.worker_id()
+              << "]: Finished IterateKernel - " << step;
       ++step;
 
       // check termination every 5 rounds
       if (step % 5 == 0) {
         if (termCheck()) {
+          LOG(INFO) << "Terminated";
           break;
         }
       }
@@ -149,9 +152,7 @@ class AsyncWorker {
     }
   }
 
-  void Finalize() {
-    messages_.Finalize();
-  }
+  void Finalize() { messages_.Finalize(); }
 
  private:
   bool termCheck() {
@@ -168,11 +169,14 @@ class AsyncWorker {
     messages_.Pause();
     communicator_.Sum(local_delta_sum, curr_delta_sum);
     messages_.Resume();
+
+    auto diff = abs(curr_delta_sum - last_delta_sum);
     LOG(INFO) << "terminate check : last progress " << last_delta_sum
               << " current progress " << curr_delta_sum << " difference "
-              << abs(curr_delta_sum - last_delta_sum);
+              << diff;
+
     last_delta_sum = curr_delta_sum;
-    return abs(curr_delta_sum - last_delta_sum) < FLAGS_termcheck_threshold;
+    return curr_delta_sum < FLAGS_termcheck_threshold;
   }
 
   std::shared_ptr<APP_T> app_;
