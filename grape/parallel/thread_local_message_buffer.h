@@ -54,11 +54,11 @@ class ThreadLocalMessageBuffer {
   }
 
   /**
-   * @brief Communication by synchronizing the manager_status_ on outer vertices, for
+   * @brief Communication by synchronizing the status on outer vertices, for
    * edge-cut fragments.
    *
    * Assume a fragment F_1, a crossing edge a->b' in F_1 and a is an inner
-   * vertex in F_1. This function invoked on F_1 send manager_status_ on b' to b on
+   * vertex in F_1. This function invoked on F_1 send status on b' to b on
    * F_2, where b is an inner vertex.
    *
    * @tparam GRAPH_T Graph type.
