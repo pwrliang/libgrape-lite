@@ -88,10 +88,11 @@ class AsyncMessageManager {
             }
           }
         }
-//        std::this_thread::yield();
+        //        std::this_thread::yield();
         Sleep(0.1);
-//        LOG(INFO) << "Pending size: " << reqs_.size()
-//                  << " erase time: " << GetCurrentTime() - erase_begin;
+        //        LOG(INFO) << "Pending size: " << reqs_.size()
+        //                  << " erase time: " << GetCurrentTime() -
+        //                  erase_begin;
       }
     });
 
@@ -112,17 +113,17 @@ class AsyncMessageManager {
         to_recv_.Put(std::move(arc));
       }
 
-        std::unique_lock<std::mutex> lk(send_mux_);
-        for (auto& e : to_send_) {
-          InArchive arc(std::move(e.second));
-          MPI_Request req;
+      std::unique_lock<std::mutex> lk(send_mux_);
+      for (auto& e : to_send_) {
+        InArchive arc(std::move(e.second));
+        MPI_Request req;
 
-          MPI_Isend(arc.GetBuffer(), arc.GetSize(), MPI_CHAR,
-                    comm_spec_.FragToWorker(e.first), ASYNC_TAG, comm_, &req);
-          // MPI_Isend needs to hold the buffer
-          reqs_.emplace(req, std::move(arc));
-        }
-        to_send_.clear();
+        MPI_Isend(arc.GetBuffer(), arc.GetSize(), MPI_CHAR,
+                  comm_spec_.FragToWorker(e.first), ASYNC_TAG, comm_, &req);
+        // MPI_Isend needs to hold the buffer
+        reqs_.emplace(req, std::move(arc));
+      }
+      to_send_.clear();
 
     } while (manager_status_.load() != ManagerStatus::STOPPED);
     LOG(INFO) << "AsyncMessageManager has benn stopped.";
@@ -134,7 +135,6 @@ class AsyncMessageManager {
     }
     cleaner_th_.join();
   }
-
 
   /**
    * @brief Inherit
