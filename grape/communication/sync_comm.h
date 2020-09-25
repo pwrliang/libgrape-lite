@@ -39,6 +39,7 @@ namespace grape {
 inline void InitMPIComm() {
   int provided;
   MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, &provided);
+  CHECK_GE(provided, MPI_THREAD_MULTIPLE);
 }
 
 inline void FinalizeMPIComm() { MPI_Finalize(); }

@@ -40,10 +40,11 @@ class IterateKernel {
 
  private:
   void Init(const FRAG_T& frag) {
+    auto vertices = frag.Vertices();
     auto inner_vertices = frag.InnerVertices();
 
     values_.Init(inner_vertices);
-    deltas_.Init(inner_vertices);
+    deltas_.Init(vertices, default_v());
     for (auto v : inner_vertices) {
       value_t value;
       init_v(v, value);

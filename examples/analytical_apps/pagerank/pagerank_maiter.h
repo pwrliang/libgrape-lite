@@ -26,14 +26,16 @@ class PageRankMaiter : public IterateKernel<FRAG_T, VALUE_T> {
   void g_function(vertex_t v, value_t value, value_t delta, adj_list_t oes,
                   std::vector<std::pair<vertex_t, value_t>>& output) override {
     auto out_degree = oes.Size();
-    if (out_degree > 0) {
-      float outv = delta * 0.8 / out_degree;
+    if(delta > 0) {
+      if (out_degree > 0) {
+        float outv = delta * 0.8 / out_degree;
 
-      for (auto e : oes) {
-        output.emplace_back(e.neighbor, outv);
+        for (auto e : oes) {
+          output.emplace_back(e.neighbor, outv);
+        }
+      } else {
+        output.emplace_back(v, delta * 0.8);
       }
-    } else {
-      output.emplace_back(v, delta * 0.8);
     }
   }
 

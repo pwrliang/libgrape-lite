@@ -86,6 +86,7 @@ class AsyncWorker {
     }
 
     auto inner_vertices = graph_->InnerVertices();
+    auto outer_vertices = graph_->OuterVertices();
     std::vector<std::pair<vertex_t, value_t>> output;
     auto& values = app_->values_;
     auto& deltas = app_->deltas_;
@@ -95,7 +96,6 @@ class AsyncWorker {
         vertex_t v;
         value_t received_delta;
         while (messages_.GetMessage(*graph_, v, received_delta)) {
-          LOG(INFO) << "recv: " << received_delta;
           app_->accumulate(app_->deltas_[v], received_delta);
         }
       }
@@ -114,24 +114,26 @@ class AsyncWorker {
           auto v = e.first;
           auto delta_to_send = e.second;
 
-          if (graph_->IsInnerVertex(v)) {
-            app_->accumulate(deltas[v], delta_to_send);
-          } else {
-            messages_.SyncStateOnOuterVertex<fragment_t, value_t>(
-                *graph_, v, delta_to_send);
-          }
+          app_->accumulate(deltas[v], delta_to_send);
         }
 
         output.clear();
       }
 
+      // send local delta to remote
+      for (auto v : outer_vertices) {
+        auto& delta_to_send = deltas[v];
+        messages_.SyncStateOnOuterVertex<fragment_t, value_t>(*graph_, v,
+                                                              delta_to_send);
+        delta_to_send = app_->default_v();
+      }
       VLOG(1) << "[Worker " << comm_spec_.worker_id()
               << "]: Finished IterateKernel - " << step;
       ++step;
 
       // check termination every 5 rounds
       if (step % 5 == 0) {
-        if (termCheck()) {
+        if (termCheck() || step > 200) {
           LOG(INFO) << "Terminated";
           break;
         }
@@ -164,11 +166,7 @@ class AsyncWorker {
       local_delta_sum += app_->deltas_[v];
     }
 
-    // Pause message manager, because we have to ensure no one are trying to
-    // call MPI
-    messages_.Pause();
     communicator_.Sum(local_delta_sum, curr_delta_sum);
-    messages_.Resume();
 
     auto diff = abs(curr_delta_sum - last_delta_sum);
     LOG(INFO) << "terminate check : last progress " << last_delta_sum

@@ -28,7 +28,7 @@ limitations under the License.
 #include "grape/worker/comm_spec.h"
 
 namespace grape {
-enum ManagerStatus { STOPPED, RUNNING, PAUSING, PAUSED };
+enum ManagerStatus { STOPPED, RUNNING };
 
 /**
  * @brief Default message manager.
@@ -56,9 +56,15 @@ class AsyncMessageManager {
     fnum_ = comm_spec_.fnum();
 
     to_recv_.SetProducerNum(1);
-    entered_safe_zone_ = false;
     sent_size_ = 0;
     manager_status_.store(ManagerStatus::STOPPED);
+  }
+
+  static void Sleep(double t) {
+    timespec req;
+    req.tv_sec = (int) t;
+    req.tv_nsec = (int64_t)(1e9 * (t - (int64_t) t));
+    nanosleep(&req, NULL);
   }
 
   /**
@@ -66,11 +72,33 @@ class AsyncMessageManager {
    */
   void Start() {
     manager_status_.store(ManagerStatus::RUNNING);
+    cleaner_th_ = std::thread([this]() {
+      while (manager_status_.load() != ManagerStatus::STOPPED) {
+        auto erase_begin = GetCurrentTime();
+        if (manager_status_.load() == ManagerStatus::RUNNING) {
+          std::unique_lock<std::mutex> lk(send_mux_);
+          for (auto it = reqs_.begin(); it != reqs_.end();) {
+            int flag = 0;
+            MPI_Request req = it->first;
+            MPI_Test(&req, &flag, MPI_STATUSES_IGNORE);
+            if (flag) {
+              it = reqs_.erase(it);
+            } else {
+              it++;
+            }
+          }
+        }
+//        std::this_thread::yield();
+        Sleep(0.1);
+//        LOG(INFO) << "Pending size: " << reqs_.size()
+//                  << " erase time: " << GetCurrentTime() - erase_begin;
+      }
+    });
+
     do {
-      entered_safe_zone_ = false;
       MPI_Status status;
       int flag;
-      MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, comm_, &flag, &status);
+      MPI_Iprobe(MPI_ANY_SOURCE, ASYNC_TAG, comm_, &flag, &status);
 
       if (flag) {
         int length;
@@ -79,70 +107,34 @@ class AsyncMessageManager {
 
         CHECK_GT(length, 0);
         OutArchive arc(length);
-        MPI_Recv(arc.GetBuffer(), length, MPI_CHAR, src_worker, 0, comm_,
-                 MPI_STATUS_IGNORE);
+        MPI_Recv(arc.GetBuffer(), length, MPI_CHAR, src_worker, ASYNC_TAG,
+                 comm_, MPI_STATUS_IGNORE);
         to_recv_.Put(std::move(arc));
       }
 
-      if (manager_status_.load() != ManagerStatus::PAUSING) {
         std::unique_lock<std::mutex> lk(send_mux_);
         for (auto& e : to_send_) {
           InArchive arc(std::move(e.second));
           MPI_Request req;
 
           MPI_Isend(arc.GetBuffer(), arc.GetSize(), MPI_CHAR,
-                    comm_spec_.FragToWorker(e.first), 0, comm_, &req);
+                    comm_spec_.FragToWorker(e.first), ASYNC_TAG, comm_, &req);
           // MPI_Isend needs to hold the buffer
-          reqs_.emplace_back(req, std::move(arc));
+          reqs_.emplace(req, std::move(arc));
         }
         to_send_.clear();
-      }
 
-      reqs_.erase(
-          std::remove_if(reqs_.begin(), reqs_.end(),
-                         [](std::pair<MPI_Request, InArchive>& e) -> bool {
-                           int flag;
-                           MPI_Test(&e.first, &flag, MPI_STATUSES_IGNORE);
-                           return flag;
-                         }),
-          reqs_.end());
-
-      if (reqs_.empty()) {
-        entered_safe_zone_ = true;
-
-        // awake pause caller
-        while (manager_status_.load() == ManagerStatus::PAUSING ||
-               manager_status_.load() == ManagerStatus::PAUSED) {
-          if (manager_status_.load() == ManagerStatus::PAUSING) {
-            std::unique_lock<std::mutex> lk(controller_mux_);
-            wait_to_pause_.notify_all();
-          }
-          std::this_thread::yield();
-        }
-      }
     } while (manager_status_.load() != ManagerStatus::STOPPED);
-    LOG(INFO) << "AsyncMessageManager stopped.";
+    LOG(INFO) << "AsyncMessageManager has benn stopped.";
   }
 
   void Stop() {
     if (manager_status_.load() == ManagerStatus::RUNNING) {
-      Pause();
       manager_status_.store(ManagerStatus::STOPPED);
     }
+    cleaner_th_.join();
   }
 
-  void Pause() {
-    if (manager_status_.load() == ManagerStatus::RUNNING) {
-      manager_status_.store(ManagerStatus::PAUSING);
-      std::unique_lock<std::mutex> lk(controller_mux_);
-      while (!entered_safe_zone_) {
-        wait_to_pause_.wait(lk);
-      }
-      manager_status_.store(ManagerStatus::PAUSED);
-    }
-  }
-
-  void Resume() { manager_status_.store(ManagerStatus::RUNNING); }
 
   /**
    * @brief Inherit
@@ -305,10 +297,9 @@ class AsyncMessageManager {
   template <typename GRAPH_T, typename MESSAGE_T>
   inline bool GetMessage(const GRAPH_T& frag, typename GRAPH_T::vertex_t& v,
                          MESSAGE_T& msg) {
-    if (to_recv_.Size() == 0)
-      return false;
     OutArchive arc;
-    to_recv_.Get(arc);
+    if (to_recv_.Size() == 0 || !to_recv_.Get(arc))
+      return false;
 
     typename GRAPH_T::vid_t gid;
     arc >> gid >> msg;
@@ -338,20 +329,18 @@ class AsyncMessageManager {
   BlockingQueue<OutArchive> to_recv_{};
 
   std::mutex send_mux_;
-  std::mutex controller_mux_;
 
-  std::condition_variable wait_to_pause_;
-
-  std::vector<std::pair<MPI_Request, InArchive>> reqs_;
+  std::unordered_map<MPI_Request, InArchive> reqs_;
   MPI_Comm comm_;
 
   fid_t fid_{};
   fid_t fnum_{};
   CommSpec comm_spec_;
+  std::thread cleaner_th_;
 
   size_t sent_size_{};
   std::atomic_int manager_status_{};
-  std::atomic_bool entered_safe_zone_{};
+  const int ASYNC_TAG = 0xff;  // tag = 0 is used in communicator.h
 };
 
 }  // namespace grape
