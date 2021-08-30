@@ -15,6 +15,7 @@ option(BUILD_SHARED_LIBS "Whether to build libgrape-lite as shared library" ON)
 option(PROFILING "Whether to enable profiling" OFF)
 option(WITH_ASAN "Build with Address Sanitizer" OFF)
 option(BUILD_LIBGRAPELITE_DOCS "Build libgrape-lite documentation" ON)
+option(WITH_CUDA "Whether to enable cuda support" ON)
 
 if (USE_HUGEPAGES AND LINUX)
     add_definitions(-DUSE_HUGEPAGES)
@@ -26,7 +27,11 @@ if (PROFILING)
 endif ()
 
 include_directories(thirdparty)
-
+if (WITH_CUDA)
+    include_directories(thirdparty/cub)
+    include_directories(thirdparty/thrust)
+    include_directories(thirdparty/moderngpu/src)
+endif ()
 # ------------------------------------------------------------------------------
 # setting default cmake type to Release
 # ------------------------------------------------------------------------------
@@ -68,7 +73,103 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -g")
 if (WITH_ASAN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -O1")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
-endif()
+endif ()
+
+if (WITH_CUDA)
+    find_package(CUDA 9 REQUIRED)
+
+    include_directories(${CUDA_TOOLKIT_INCLUDE})
+    set(CUDA_LIBS ${CUDA_TOOLKIT_TARGET_DIR}/lib64/stubs/libcuda.so
+            ${CUDA_TOOLKIT_TARGET_DIR}/lib64/libnvToolsExt.so
+            ${CUDA_TOOLKIT_TARGET_DIR}/lib64/libcudart.so)
+
+    if (CUDA_VERSION VERSION_LESS "11.0")
+        option(GEN_SM_30 "Whether to generate code for Compute Capability 3.0 devices" OFF)
+        if (GEN_SM_30)
+            set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode arch=compute_30,code=sm_30")
+        endif ()
+    endif ()
+
+    option(GEN_SM_35 "Whether to generate code for Compute Capability 3.5 devices" OFF)
+    if (GEN_SM_35)
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode arch=compute_35,code=sm_35")
+    endif ()
+
+    option(GEN_SM_37 "Whether to generate code for Compute Capability 3.7 devices" OFF)
+    if (GEN_SM_37)
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode arch=compute_37,code=sm_37")
+    endif ()
+
+    option(GEN_SM_50 "Whether to generate code for Compute Capability 5.0 devices" OFF)
+    if (GEN_SM_50)
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode arch=compute_50,code=sm_50")
+    endif ()
+
+    option(GEN_SM_52 "Whether to generate code for Compute Capability 5.2 devices" OFF)
+    if (GEN_SM_52)
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode arch=compute_52,code=sm_52")
+    endif ()
+
+    if (CUDA_VERSION VERSION_GREATER "7.6")
+        option(GEN_SM_60 "Whether to generate code for Compute Capability 6.0 devices" ON)
+        option(GEN_SM_61 "Whether to generate code for Compute Capability 6.1 devices" OFF)
+        if (GEN_SM_60)
+            set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode arch=compute_60,code=sm_60")
+        endif ()
+        if (GEN_SM_61)
+            set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode arch=compute_61,code=sm_61")
+        endif ()
+    endif ()
+
+    if ((CUDA_VERSION VERSION_GREATER "9.0") OR (CUDA_VERSION VERSION_EQUAL "9.0"))
+        option(GEN_SM_70 "Whether to generate code for Compute Capability 7.0 devices" ON)
+        if (GEN_SM_70)
+            set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode arch=compute_70,code=sm_70")
+        endif ()
+    endif ()
+
+    if ((CUDA_VERSION VERSION_GREATER "10.0") OR (CUDA_VERSION VERSION_EQUAL "10.0"))
+        option(GEN_SM_75 "Whether to generate code for Compute Capability 7.5 devices" OFF)
+        if (GEN_SM_75)
+            set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode arch=compute_75,code=sm_75")
+        endif ()
+    endif ()
+
+    if ((CUDA_VERSION VERSION_GREATER "11.0") OR (CUDA_VERSION VERSION_EQUAL "11.0"))
+        option(GEN_SM_80 "Whether to generate code for Compute Capability 8.0 devices" OFF)
+        if (GEN_SM_80)
+            set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode arch=compute_80,code=sm_80")
+        endif ()
+    endif ()
+
+    if ((CUDA_VERSION VERSION_GREATER "11.2") OR (CUDA_VERSION VERSION_EQUAL "11.2"))
+        option(GEN_SM_86 "Whether to generate code for Compute Capability 8.6 devices" OFF)
+        if (GEN_SM_86)
+            set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode arch=compute_86,code=sm_86")
+        endif ()
+    endif ()
+
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Wno-deprecated-gpu-targets")
+
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message("Debug mode")
+        set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-g;-lineinfo;-Xcompiler;-ggdb;-std=c++14;--extended-lambda)
+    else ()
+        set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3;-DNDEBUG;-Xcompiler;-DNDEBUG;-std=c++14;--extended-lambda)
+    endif ()
+
+    set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+    set(CUDA_SEPARABLE_COMPILATION OFF)
+    message("-- Host Compiler: ${CUDA_HOST_COMPILER}")
+
+    # find NCCL---------------------------------------------------------------------
+    # 2.7 at least
+    include("cmake/FindNCCL.cmake")
+    include_directories(SYSTEM ${NCCL_INCLUDE_DIRS})
+    if (NCCL_MAJOR_VERSION VERSION_LESS "2" OR NCCL_MINOR_VERSION VERSION_LESS "7")
+        message(FATAL_ERROR "The version of NCCL is required at least 2.7")
+    endif ()
+endif ()
 
 # ------------------------------------------------------------------------------
 # find_libraries
@@ -116,11 +217,11 @@ endif ()
 macro(install_libgrapelite_target target)
     # install
     install(TARGETS ${target}
-        EXPORT libgrapelite-targets
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin
-    )
+            EXPORT libgrapelite-targets
+            ARCHIVE DESTINATION lib
+            LIBRARY DESTINATION lib
+            RUNTIME DESTINATION bin
+            )
 endmacro()
 
 # ------------------------------------------------------------------------------
@@ -162,7 +263,7 @@ else ()
             examples/gnn_sampler
             examples/gnn_sampler/thirdparty
             ${RDKAFKA_INCLUDE_DIR})
-    target_link_libraries(gnn_sampler grape-lite  ${MPI_CXX_LIBRARIES}
+    target_link_libraries(gnn_sampler grape-lite ${MPI_CXX_LIBRARIES}
             ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${CMAKE_DL_LIBS} ${RDKAFKA_LIBRARIES})
     install_libgrapelite_target(gnn_sampler)
 endif ()
@@ -170,53 +271,53 @@ endif ()
 set(EXAMPLES_DIR ${PROJECT_SOURCE_DIR}/examples)
 
 if (PROFILING)
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty/atlarge-research-granula
-        DESTINATION include # target directory
-        FILES_MATCHING      # install only matched files
-        PATTERN "*.h"       # select header files
-)        
-endif()
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty/atlarge-research-granula
+            DESTINATION include # target directory
+            FILES_MATCHING      # install only matched files
+            PATTERN "*.h"       # select header files
+            )
+endif ()
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty/flat_hash_map
         DESTINATION include
         FILES_MATCHING
         PATTERN "*.h"
         PATTERN "*.hpp"
-)
+        )
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/grape
         DESTINATION include
         FILES_MATCHING
         PATTERN "*.h"
-)
+        )
 install(DIRECTORY ${EXAMPLES_DIR}/analytical_apps/bfs
-                  ${EXAMPLES_DIR}/analytical_apps/cdlp
-                  ${EXAMPLES_DIR}/analytical_apps/lcc
-                  ${EXAMPLES_DIR}/analytical_apps/pagerank
-                  ${EXAMPLES_DIR}/analytical_apps/sssp
-                  ${EXAMPLES_DIR}/analytical_apps/wcc
+        ${EXAMPLES_DIR}/analytical_apps/cdlp
+        ${EXAMPLES_DIR}/analytical_apps/lcc
+        ${EXAMPLES_DIR}/analytical_apps/pagerank
+        ${EXAMPLES_DIR}/analytical_apps/sssp
+        ${EXAMPLES_DIR}/analytical_apps/wcc
         DESTINATION include/grape/analytical_apps
         FILES_MATCHING
         PATTERN "*.h"
-)
+        )
 install(DIRECTORY ${EXAMPLES_DIR}/gnn_sampler
         DESTINATION include/grape/analytical_apps
         FILES_MATCHING
         PATTERN "*.h"
-)
+        )
 
 configure_file(libgrapelite-config.in.cmake
-               "${PROJECT_BINARY_DIR}/libgrapelite-config.cmake" @ONLY
-)
+        "${PROJECT_BINARY_DIR}/libgrapelite-config.cmake" @ONLY
+        )
 configure_file(libgrapelite-config-version.in.cmake
-               "${PROJECT_BINARY_DIR}/libgrapelite-config-version.cmake" @ONLY
-)
+        "${PROJECT_BINARY_DIR}/libgrapelite-config-version.cmake" @ONLY
+        )
 install(FILES "${PROJECT_BINARY_DIR}/libgrapelite-config.cmake"
-              "${PROJECT_BINARY_DIR}/libgrapelite-config-version.cmake"
+        "${PROJECT_BINARY_DIR}/libgrapelite-config-version.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libgrapelite
-)
+        )
 install(EXPORT libgrapelite-targets
         FILE libgrapelite-targets.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libgrapelite
-)
+        )
 
 # ------------------------------------------------------------------------------
 # format code
@@ -240,17 +341,17 @@ add_custom_target(clformat
 # cpplint, check for readability with Google style
 # ------------------------------------------------------------------------------
 add_custom_target(cpplint
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/misc/cpplint.py ${FILES_NEED_FORMAT}
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/misc/cpplint.py ${FILES_NEED_FORMAT}
         COMMENT "Running cpplint check."
         VERBATIM)
 
 # ------------------------------------------------------------------------------
 # generate docs
 # ------------------------------------------------------------------------------
-if(BUILD_LIBGRAPELITE_DOCS)
+if (BUILD_LIBGRAPELITE_DOCS)
     add_custom_target(doc COMMAND doxygen "${CMAKE_CURRENT_SOURCE_DIR}/misc/doc-config"
             COMMENT "Generating docs."
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             VERBATIM)
-endif()
+endif ()
 
