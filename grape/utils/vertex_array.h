@@ -36,66 +36,69 @@ namespace grape {
 template <typename T>
 class Vertex {
  public:
-  Vertex() {}
-  explicit Vertex(T value) : value_(value) {}
-  Vertex(const Vertex& rhs) : value_(rhs.value_) {}
-  Vertex(Vertex&& rhs) : value_(rhs.value_) {}
+  Vertex() = default;
+  DEV_HOST explicit Vertex(T value) : value_(value) {}
+  DEV_HOST Vertex(const Vertex& rhs) : value_(rhs.value_) {}
+  DEV_HOST Vertex(Vertex&& rhs) : value_(rhs.value_) {}
 
-  ~Vertex() {}
+  ~Vertex() = default;
 
-  inline Vertex& operator=(const Vertex& rhs) {
+  DEV_HOST_INLINE Vertex& operator=(const Vertex& rhs) {
     value_ = rhs.value_;
     return *this;
   }
 
-  inline Vertex& operator=(Vertex&& rhs) {
+  DEV_HOST_INLINE Vertex& operator=(Vertex&& rhs) {
     value_ = rhs.value_;
     return *this;
   }
 
-  inline Vertex& operator=(T value) {
+  DEV_HOST_INLINE Vertex& operator=(T value) {
     value_ = value;
     return *this;
   }
 
-  inline Vertex& operator++() {
+  DEV_HOST_INLINE Vertex& operator++() {
     value_++;
     return *this;
   }
 
-  inline Vertex operator++(int) {
+  DEV_HOST_INLINE Vertex operator++(int) {
     Vertex res(value_);
     value_++;
     return res;
   }
 
-  inline Vertex& operator--() {
+  DEV_HOST_INLINE Vertex& operator--() {
     value_--;
     return *this;
   }
 
-  inline Vertex operator--(int) {
+  DEV_HOST_INLINE Vertex operator--(int) {
     Vertex res(value_);
     value_--;
     return res;
   }
-  inline bool operator==(const Vertex& rhs) const {
+
+  DEV_HOST_INLINE bool operator==(const Vertex& rhs) const {
     return value_ == rhs.value_;
   }
 
-  inline bool operator!=(const Vertex& rhs) const {
+  DEV_HOST_INLINE bool operator!=(const Vertex& rhs) const {
     return value_ != rhs.value_;
   }
 
   void Swap(Vertex& rhs) { std::swap(value_, rhs.value_); }
 
-  inline bool operator<(const Vertex& rhs) const { return value_ < rhs.value_; }
+  DEV_HOST_INLINE bool operator<(const Vertex& rhs) const {
+    return value_ < rhs.value_;
+  }
 
-  inline Vertex& operator*() { return *this; }
+  DEV_HOST_INLINE Vertex& operator*() { return *this; }
 
-  inline T GetValue() const { return value_; }
+  DEV_HOST_INLINE T GetValue() const { return value_; }
 
-  inline void SetValue(T value) { value_ = value; }
+  DEV_HOST_INLINE void SetValue(T value) { value_ = value; }
 
   friend InArchive& operator<<(InArchive& archive, const Vertex& h) {
     archive << h.value_;
@@ -108,7 +111,7 @@ class Vertex {
   }
 
  private:
-  T value_;
+  T value_{};
 };
 
 template <typename T>
@@ -124,26 +127,30 @@ bool operator==(Vertex<T> const& lhs, Vertex<T> const& rhs) {
 template <typename T>
 class VertexRange {
  public:
-  VertexRange() {}
-  VertexRange(T begin, T end) : begin_(begin), end_(end), size_(end - begin) {}
-  VertexRange(const Vertex<T>& begin, const Vertex<T>& end)
+  VertexRange() = default;
+
+  DEV_HOST VertexRange(T begin, T end)
+      : begin_(begin), end_(end), size_(end - begin) {}
+
+  DEV_HOST VertexRange(const Vertex<T>& begin, const Vertex<T>& end)
       : begin_(begin), end_(end), size_(end.GetValue() - begin.GetValue()) {}
-  VertexRange(const VertexRange& r)
+
+  DEV_HOST VertexRange(const VertexRange& r)
       : begin_(r.begin_), end_(r.end_), size_(r.size_) {}
 
-  inline const Vertex<T>& begin() const { return begin_; }
+  DEV_HOST_INLINE const Vertex<T>& begin() const { return begin_; }
 
-  inline const Vertex<T>& end() const { return end_; }
+  DEV_HOST_INLINE const Vertex<T>& end() const { return end_; }
 
-  inline size_t size() const { return size_; }
+  DEV_HOST_INLINE size_t size() const { return size_; }
 
-  void Swap(VertexRange& rhs) {
+  DEV_HOST void Swap(VertexRange& rhs) {
     begin_.Swap(rhs.begin_);
     end_.Swap(rhs.end_);
     std::swap(size_, rhs.size_);
   }
 
-  void SetRange(T begin, T end) {
+  DEV_HOST void SetRange(T begin, T end) {
     begin_ = begin;
     end_ = end;
     size_ = end - begin;
@@ -151,7 +158,7 @@ class VertexRange {
 
  private:
   Vertex<T> begin_, end_;
-  size_t size_;
+  size_t size_{};
 };
 
 /**

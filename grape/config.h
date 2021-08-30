@@ -43,6 +43,22 @@ template <typename T>
 using Allocator = DefaultAllocator<T>;
 #endif
 
+#ifdef __CUDACC__
+#define DEV_HOST __device__ __host__
+#define DEV_HOST_INLINE __device__ __host__ __forceinline__
+#define DEV_INLINE __device__ __forceinline__
+#else
+#define DEV_HOST
+#define DEV_HOST_INLINE inline
+#endif
+
+#ifdef WITH_CUDA
+#define MAX_BLOCK_SIZE 256
+#define MAX_GRID_SIZE 768
+#define TID_1D (threadIdx.x + blockIdx.x * blockDim.x)
+#define TOTAL_THREADS_1D (gridDim.x * blockDim.x)
+#endif
+
 const int kCoordinatorRank = 0;
 
 const char kSerializationVertexMapFilename[] = "vertex_map.s";
