@@ -1,5 +1,6 @@
 #ifndef GRAPE_CUDA_UTILS_CUDA_UTILS_H_
 #define GRAPE_CUDA_UTILS_CUDA_UTILS_H_
+#ifdef WITH_CUDA
 #include <cuda.h>
 #include <nccl.h>
 
@@ -63,5 +64,5 @@ inline void KernelSizing(int& block_num, int& block_size, size_t work_size) {
       grape::cuda::HandleNcclError(__FILE__, __LINE__, errr); \
     }                                                         \
   } while (0)
-
+#endif  // WITH_CUDA
 #endif  // GRAPE_CUDA_UTILS_CUDA_UTILS_H_

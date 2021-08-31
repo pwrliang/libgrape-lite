@@ -53,7 +53,7 @@ class HostFragment {
   using vertex_map_t = grape::GlobalVertexMap<oid_t, vid_t>;
   using dev_vertex_map_t = grape::DeviceVertexMap<oid_t, vid_t>;
   using device_t =
-      dev::DeviceFragment<OID_T, VID_T, VDATA_T, EDATA_T, _load_strategy>;
+      cuda::DeviceFragment<OID_T, VID_T, VDATA_T, EDATA_T, _load_strategy>;
   using coo_t = COOFragment<oid_t, vid_t, vdata_t, edata_t>;
 
   using IsEdgeCut = std::true_type;

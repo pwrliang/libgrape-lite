@@ -72,7 +72,7 @@ class Edge<VID_T, grape::EmptyType> {
   };
 };
 
-namespace dev {
+namespace cuda {
 template <typename OID_T, typename VID_T, typename VDATA_T, typename EDATA_T>
 class COOFragment {
  public:
@@ -112,7 +112,7 @@ class COOFragment {
  private:
   ArrayView<edge_t> edges_;
 };
-}  // namespace dev
+}  // namespace cuda
 
 template <typename OID_T, typename VID_T, typename VDATA_T, typename EDATA_T>
 class COOFragment {

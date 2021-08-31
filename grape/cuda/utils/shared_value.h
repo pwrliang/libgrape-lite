@@ -1,0 +1,77 @@
+#ifndef GRAPE_CUDA_UTILS_SHARED_VALUE_H_
+#define GRAPE_CUDA_UTILS_SHARED_VALUE_H_
+
+#ifdef WITH_CUDA
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+#include <thrust/system/cuda/experimental/pinned_allocator.h>
+
+#include "grape/cuda/utils/cuda_utils.h"
+#include "grape/cuda/utils/stream.h"
+
+namespace grape {
+
+template <typename T>
+class SharedValue {
+  static_assert(std::is_pod<T>::value, "Unsupported datatype");
+
+ public:
+  SharedValue() {
+    d_buffer_.resize(1);
+    h_buffer_.resize(1);
+  }
+
+  void set(const T& t) { d_buffer_[0] = t; }
+
+  void set(const T& t, const Stream& stream) {
+    h_buffer_[0] = t;
+    CHECK_CUDA(cudaMemcpyAsync(thrust::raw_pointer_cast(d_buffer_.data()),
+                               thrust::raw_pointer_cast(h_buffer_.data()),
+                               sizeof(T), cudaMemcpyHostToDevice,
+                               stream.cuda_stream()));
+  }
+
+  typename thrust::device_vector<T>::reference get() { return d_buffer_[0]; }
+
+  typename thrust::device_vector<T>::const_reference get() const {
+    return d_buffer_[0];
+  }
+
+  T get(const Stream& stream) const {
+    CHECK_CUDA(
+        cudaMemcpyAsync((void*) thrust::raw_pointer_cast(h_buffer_.data()),
+                        thrust::raw_pointer_cast(d_buffer_.data()), sizeof(T),
+                        cudaMemcpyDeviceToHost, stream.cuda_stream()));
+    stream.Sync();
+    return h_buffer_[0];
+  }
+
+  T* data() { return thrust::raw_pointer_cast(d_buffer_.data()); }
+
+  const T* data() const { return thrust::raw_pointer_cast(d_buffer_.data()); }
+
+  void Assign(const SharedValue<T>& rhs) {
+    CHECK_CUDA(cudaMemcpy(thrust::raw_pointer_cast(d_buffer_.data()),
+                          thrust::raw_pointer_cast(rhs.d_buffer_.data()),
+                          sizeof(T), cudaMemcpyDefault));
+  }
+
+  void Assign(const SharedValue<T>& rhs, const Stream& stream) {
+    CHECK_CUDA(cudaMemcpyAsync(thrust::raw_pointer_cast(d_buffer_.data()),
+                               thrust::raw_pointer_cast(rhs.d_buffer_.data()),
+                               sizeof(T), cudaMemcpyDefault,
+                               stream.cuda_stream()));
+  }
+
+  void Swap(SharedValue<T>& rhs) { d_buffer_.swap(rhs.d_buffer_); }
+
+ private:
+  thrust::device_vector<T> d_buffer_;
+  thrust::host_vector<T, thrust::cuda::experimental::pinned_allocator<T>>
+      h_buffer_;
+};
+
+}  // namespace grape
+
+#endif WITH_GPU
+#endif  // GRAPE_CUDA_UTILS_SHARED_VALUE_H_

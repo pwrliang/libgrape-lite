@@ -29,6 +29,7 @@
 
 #ifndef GRAPE_CUDA_UTILS_MARKERS_H_
 #define GRAPE_CUDA_UTILS_MARKERS_H_
+#ifdef WITH_CUDA
 namespace grape {
 namespace cuda {
 
@@ -170,4 +171,5 @@ struct IntervalRangeMarker : public RangeMarker {
 };
 }  // namespace cuda
 }  // namespace grape
+#endif // WITH_CUDA
 #endif  // GRAPE_CUDA_UTILS_MARKERS_H_
