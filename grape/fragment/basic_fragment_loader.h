@@ -46,6 +46,8 @@ struct LoadGraphSpec {
   bool directed;
   bool rebalance;
   int rebalance_vertex_factor;
+  bool skip_first_valid_line;
+  bool rm_self_cycle;
 
   bool serialize;
   std::string serialization_prefix;
@@ -68,6 +70,12 @@ struct LoadGraphSpec {
     deserialize = flag;
     deserialization_prefix = prefix;
   }
+
+  void set_skip_first_valid_line(bool val = false) {
+    skip_first_valid_line = val;
+  }
+
+  void set_rm_self_cycle(bool val = true) { rm_self_cycle = val; }
 };
 
 inline LoadGraphSpec DefaultLoadGraphSpec() {
@@ -77,6 +85,8 @@ inline LoadGraphSpec DefaultLoadGraphSpec() {
   spec.rebalance_vertex_factor = 0;
   spec.serialize = false;
   spec.deserialize = false;
+  spec.skip_first_valid_line = false;
+  spec.rm_self_cycle = false;
   return spec;
 }
 

@@ -165,7 +165,9 @@ class EVFragmentLoader {
           VLOG(1) << e.what();
           continue;
         }
-
+        if (src == dst && spec.rm_self_cycle) {
+          continue;
+        }
         basic_fragment_loader_.AddEdge(src, dst, e_data);
 
         if (!spec.directed) {

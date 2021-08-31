@@ -114,19 +114,34 @@ class EFragmentLoader {
       oid_t src, dst;
 
       size_t lineNo = 0;
+      int skip = spec.skip_first_valid_line;
+      edata_t fe_data;
+      oid_t fsrc, fdst;
+
       while (io_adaptor->ReadLine(line)) {
         ++lineNo;
         if (lineNo % 1000000 == 0) {
           VLOG(10) << "[worker-" << comm_spec_.worker_id() << "][efile] "
                    << lineNo;
         }
-        if (line.empty() || line[0] == '#')
+        if (line.empty() || line[0] == '#' || line[0] == '%')
           continue;
 
         try {
           line_parser_.LineParserForEFile(line, src, dst, e_data);
         } catch (std::exception& e) {
           VLOG(1) << e.what();
+          continue;
+        }
+
+        if (skip) {
+          skip = 0;
+          fsrc = src;
+          fdst = dst;
+          fe_data = e_data;
+          continue;
+        }
+        if (src == dst && spec.rm_self_cycle) {
           continue;
         }
 
@@ -138,6 +153,21 @@ class EFragmentLoader {
           basic_fragment_loader_.AddEdge(dst, src, e_data);
         }
       }
+
+      if (spec.skip_first_valid_line) {
+        int victim; // victim skip the first valid line
+        MPI_Allreduce(&skip, &victim, 1, MPI_INT, MPI_SUM, comm_spec_.comm());
+        if( = comm_spec_.worker_id() > victim ) {
+          basic_fragment_loader_.AddEdge(fsrc, fdst, fe_data);
+          basic_fragment_loader_.AddVertex(fsrc, fake_data);
+          basic_fragment_loader_.AddVertex(fdst, fake_data);
+
+          if (!spec.directed) {
+            basic_fragment_loader_.AddEdge(fdst, fsrc, e_data);
+          }   
+        }
+      }
+
       io_adaptor->Close();
     }
 
