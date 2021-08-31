@@ -1,6 +1,7 @@
 
 #ifndef GRAPE_CUDA_UTILS_CUDA_UTILS_H_
 #define GRAPE_CUDA_UTILS_CUDA_UTILS_H_
+#ifdef WITH_CUDA
 #include "grape/config.h"
 #include "grape/cuda/utils/launcher.h"
 
@@ -102,5 +103,5 @@ inline void KernelSizing(int& block_num, int& block_size, size_t work_size) {
 
 }  // namespace cuda
 }  // namespace grape
-
+#endif // WITH_CUDA
 #endif  // GRAPE_CUDA_UTILS_CUDA_UTILS_H_

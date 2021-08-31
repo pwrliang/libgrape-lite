@@ -67,7 +67,7 @@ class DeviceVertexMap {
   template <typename _OID_T, typename _VID_T>
   friend class grape::DeviceVertexMap;
 };
-}  // namespace dev
+}  // namespace cuda
 
 /**
  * @brief a kind of VertexMapBase which holds global mapping information in
@@ -129,9 +129,9 @@ class DeviceVertexMap {
     }
   }
 
-  dev::DeviceVertexMap<OID_T, VID_T> DeviceObject() {
+  cuda::DeviceVertexMap<OID_T, VID_T> DeviceObject() {
     auto& comm_spec = vm_ptr_->GetCommSpec();
-    dev::DeviceVertexMap<OID_T, VID_T> dev_vm;
+    cuda::DeviceVertexMap<OID_T, VID_T> dev_vm;
 
     dev_vm.fnum_ = comm_spec.fnum();
     dev_vm.id_parser_ = id_parser_;
@@ -155,6 +155,6 @@ class DeviceVertexMap {
   thrust::device_vector<ArrayView<OID_T>> d_l2o_ptr_;
 };
 
-}  // namespace grape_gpu
+}  // namespace grape
 #endif // WITH_GPU
 #endif  // GRAPE_CUDA_VERTEX_MAP_DEVICE_VERTEX_MAP_H_
