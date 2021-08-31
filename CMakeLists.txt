@@ -28,6 +28,7 @@ endif ()
 
 include_directories(thirdparty)
 if (WITH_CUDA)
+    message("-- Build with CUDA support")
     include_directories(thirdparty/cub)
     include_directories(thirdparty/thrust)
     include_directories(thirdparty/moderngpu/src)
