@@ -1,4 +1,4 @@
-project(libgrape-lite C CXX)
+project(libgrape-lite C CXX CUDA)
 cmake_minimum_required(VERSION 2.8)
 
 set(LIBGRAPELITE_MAJOR_VERSION 0)
@@ -32,6 +32,7 @@ if (WITH_CUDA)
     include_directories(thirdparty/cub)
     include_directories(thirdparty/thrust)
     include_directories(thirdparty/moderngpu/src)
+    add_definitions(-DWITH_CUDA)
 endif ()
 # ------------------------------------------------------------------------------
 # setting default cmake type to Release
@@ -154,9 +155,9 @@ if (WITH_CUDA)
 
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         message("Debug mode")
-        set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-g;-lineinfo;-Xcompiler;-ggdb;-std=c++14;--extended-lambda)
+        set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-g;-lineinfo;-Xcompiler;-ggdb;-std=c++14;--expt-extended-lambda)
     else ()
-        set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3;-DNDEBUG;-Xcompiler;-DNDEBUG;-std=c++14;--extended-lambda)
+        set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3;-DNDEBUG;-Xcompiler;-DNDEBUG;-std=c++14;--expt-extended-lambda)
     endif ()
 
     set(CUDA_PROPAGATE_HOST_FLAGS OFF)
@@ -251,6 +252,13 @@ else ()
     target_link_libraries(analytical_apps grape-lite ${MPI_CXX_LIBRARIES}
             ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${CMAKE_DL_LIBS})
     install_libgrapelite_target(analytical_apps)
+
+    if (WITH_CUDA)
+        add_executable(run_cuda_app examples/analytical_apps/flags.cc examples/analytical_apps/run_cuda_app.cu)
+        target_include_directories(run_cuda_app PRIVATE examples/analytical_apps)
+        target_link_libraries(run_cuda_app grape-lite ${MPI_CXX_LIBRARIES}
+                ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${CMAKE_DL_LIBS} ${CUDA_LIBS})
+    endif ()
 endif ()
 
 if (NOT GFLAGS_FOUND)

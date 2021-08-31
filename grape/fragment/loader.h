@@ -15,6 +15,8 @@ limitations under the License.
 
 #ifndef GRAPE_FRAGMENT_LOADER_H_
 #define GRAPE_FRAGMENT_LOADER_H_
+#include <climits>
+#include <cstdlib>
 
 #include <memory>
 #include <string>
@@ -25,6 +27,55 @@ limitations under the License.
 #include "grape/io/local_io_adaptor.h"
 
 namespace grape {
+template <typename FRAG_T, typename PARTITIONER_T>
+void SetSerialize(const grape::CommSpec& comm_spec,
+                  const std::string& serialize_prefix, const std::string& efile,
+                  const std::string& vfile, LoadGraphSpec& graph_spec) {
+  if (serialize_prefix.empty() || efile.empty()) {
+    return;
+  }
+
+  auto absolute = [](const std::string& rel_path) {
+    char abs_path[PATH_MAX + 1];
+    char* ptr = realpath(rel_path.c_str(), abs_path);
+    CHECK(ptr != nullptr) << "Failed to access " << rel_path;
+    return std::string(ptr);
+  };
+
+  std::string digest;
+
+  digest += absolute(efile);
+  if (!vfile.empty()) {
+    digest += absolute(vfile);
+  }
+  digest += std::to_string(comm_spec.fnum());
+  digest += typeid(FRAG_T).name();
+  digest += typeid(PARTITIONER_T).name();
+  digest += graph_spec.directed ? "d" : "ud";
+
+  std::replace(digest.begin(), digest.end(), '/', '_');
+
+  auto prefix = absolute(serialize_prefix) + "/" + digest;
+  char fbuf[1024];
+  int flag = 0, sum;
+
+  snprintf(fbuf, sizeof(fbuf), grape::kSerializationFilenameFormat,
+           prefix.c_str(), comm_spec.fid());
+  flag = access(fbuf, R_OK) == 0 ? 0 : 1;
+
+  MPI_Allreduce(&flag, &sum, 1, MPI_INT, MPI_SUM, comm_spec.comm());
+
+  if (sum != 0) {
+    if (comm_spec.worker_id() == grape::kCoordinatorRank) {
+      mkdir(prefix.c_str(), 0777);
+    }
+    MPI_Barrier(comm_spec.comm());
+    graph_spec.set_serialize(true, prefix);
+  } else {
+    graph_spec.set_deserialize(true, prefix);
+  }
+}
+
 /**
  * @brief Loader manages graph loading from files.
  *

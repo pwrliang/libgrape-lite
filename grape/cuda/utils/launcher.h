@@ -1,6 +1,7 @@
-
 #ifndef GRAPE_CUDA_UTILS_LAUNCHER_H_
 #define GRAPE_CUDA_UTILS_LAUNCHER_H_
+#include "grape/cuda/utils/stream.h"
+
 namespace grape {
 
 namespace cuda {
