@@ -63,7 +63,9 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+
+
 if (APPLE)
     set(CMAKE_MACOSX_RPATH ON)
 else ()
@@ -78,6 +80,8 @@ if (WITH_ASAN)
 endif ()
 
 if (WITH_CUDA)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+
     find_package(CUDA 9 REQUIRED)
 
     include_directories(${CUDA_TOOLKIT_INCLUDE})
@@ -171,6 +175,8 @@ if (WITH_CUDA)
     if (NCCL_MAJOR_VERSION VERSION_LESS "2" OR NCCL_MINOR_VERSION VERSION_LESS "7")
         message(FATAL_ERROR "The version of NCCL is required at least 2.7")
     endif ()
+else ()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif ()
 
 # ------------------------------------------------------------------------------
@@ -254,7 +260,7 @@ else ()
     install_libgrapelite_target(analytical_apps)
 
     if (WITH_CUDA)
-        add_executable(run_cuda_app examples/analytical_apps/flags.cc examples/analytical_apps/run_cuda_app.cu)
+        cuda_add_executable(run_cuda_app examples/analytical_apps/flags.cc examples/analytical_apps/run_cuda_app.cu)
         target_include_directories(run_cuda_app PRIVATE examples/analytical_apps)
         target_link_libraries(run_cuda_app grape-lite ${MPI_CXX_LIBRARIES}
                 ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${CMAKE_DL_LIBS} ${CUDA_LIBS})

@@ -33,7 +33,7 @@ namespace grape {
  */
 template <typename VID_T, typename EDATA_T>
 struct Nbr {
-  Nbr() : neighbor(), data() {}
+  DEV_HOST Nbr() : neighbor(), data() {}
   DEV_HOST explicit Nbr(const VID_T& nbr_) : neighbor(nbr_), data() {}
   DEV_HOST explicit Nbr(const Vertex<VID_T>& nbr_) : neighbor(nbr_), data() {}
   DEV_HOST Nbr(const Nbr& rhs) : neighbor(rhs.neighbor), data(rhs.data) {}
@@ -73,12 +73,12 @@ struct Nbr {
  */
 template <typename VID_T>
 struct Nbr<VID_T, EmptyType> {
-  Nbr() : neighbor() {}
-  explicit Nbr(const VID_T& nbr_) : neighbor(nbr_) {}
-  explicit Nbr(const Vertex<VID_T>& nbr_) : neighbor(nbr_) {}
-  Nbr(const Nbr& rhs) : neighbor(rhs.neighbor) {}
-  Nbr(const VID_T& nbr_, const EmptyType&) : neighbor(nbr_) {}
-  Nbr(const Vertex<VID_T>& nbr_, const EmptyType&) : neighbor(nbr_) {}
+  DEV_HOST Nbr() : neighbor() {}
+  DEV_HOST explicit Nbr(const VID_T& nbr_) : neighbor(nbr_) {}
+  DEV_HOST explicit Nbr(const Vertex<VID_T>& nbr_) : neighbor(nbr_) {}
+  DEV_HOST Nbr(const Nbr& rhs) : neighbor(rhs.neighbor) {}
+  DEV_HOST Nbr(const VID_T& nbr_, const EmptyType&) : neighbor(nbr_) {}
+  DEV_HOST Nbr(const Vertex<VID_T>& nbr_, const EmptyType&) : neighbor(nbr_) {}
 
   DEV_HOST_INLINE Nbr& operator=(const Nbr& rhs) {
     neighbor = rhs.neighbor;
@@ -158,7 +158,7 @@ class AdjList {
     NbrT* current_;
 
    public:
-    iterator() noexcept : current_() {}
+    DEV_HOST iterator() noexcept : current_() {}
     DEV_HOST explicit iterator(const pointer_type& c) noexcept : current_(c) {}
     DEV_HOST reference_type operator*() const noexcept { return *current_; }
     DEV_HOST pointer_type operator->() const noexcept { return current_; }
@@ -197,7 +197,7 @@ class AdjList {
     const NbrT* current_;
 
    public:
-    const_iterator() noexcept : current_() {}
+    DEV_HOST const_iterator() noexcept : current_() {}
     DEV_HOST explicit const_iterator(const pointer_type& c) noexcept
         : current_(c) {}
     DEV_HOST reference_type operator*() const noexcept { return *current_; }

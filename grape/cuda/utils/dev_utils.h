@@ -19,7 +19,7 @@ DEV_HOST_INLINE size_t round_up(size_t numerator, size_t denominator) {
 }
 
 // Refer:https://github.com/gunrock/gunrock/blob/a7fc6948f397912ca0c8f1a8ccf27d1e9677f98f/gunrock/oprtr/intersection/cta.cuh#L84
-DEV_HOST_INLINE unsigned ilog2(unsigned int v) {
+DEV_INLINE unsigned ilog2(unsigned int v) {
   register unsigned int t, tt;
   if (tt = v >> 16)
     return ((t = tt >> 8) ? 24 + logtable[t] : 16 + logtable[tt]);

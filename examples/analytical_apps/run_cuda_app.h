@@ -19,7 +19,7 @@
 #include <vector>
 
 #include "flags.h"
-#include "grape/fragment/immutable_edgecut_fragment.h"
+#include "grape/cuda/fragment/host_fragment.h"
 #include "grape/fragment/loader.h"
 #include "grape/worker/comm_spec.h"
 #include "timer.h"
@@ -55,6 +55,7 @@ void CreateAndQuery(const grape::CommSpec& comm_spec, const std::string& efile,
 
   LoadGraphSpec graph_spec = DefaultLoadGraphSpec();
 
+  // TODO:
 //  graph_spec.set_skip_first_valid_line(FLAGS_mtx);
   graph_spec.set_directed(FLAGS_directed);
   graph_spec.set_rebalance(FLAGS_rebalance, FLAGS_rebalance_vertex_factor);
@@ -95,19 +96,18 @@ void Run() {
   std::string vfile = FLAGS_vfile;
   std::string out_prefix = FLAGS_out_prefix;
 
-//  if (FLAGS_debug) {
-//    volatile int i = 0;
-//    char hostname[256];
-//    gethostname(hostname, sizeof(hostname));
-//    printf("PID %d on %s ready for attach\n", getpid(), hostname);
-//    fflush(stdout);
-//    while (0 == i)
-//      sleep(1);
-//  }
+  //  if (FLAGS_debug) {
+  //    volatile int i = 0;
+  //    char hostname[256];
+  //    gethostname(hostname, sizeof(hostname));
+  //    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+  //    fflush(stdout);
+  //    while (0 == i)
+  //      sleep(1);
+  //  }
 
-  using GraphType =
-      grape::ImmutableEdgecutFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-                                      grape::LoadStrategy::kOnlyOut>;
+  using GraphType = grape::cuda::HostFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                              grape::LoadStrategy::kOnlyOut>;
   CreateAndQuery<GraphType>(comm_spec, efile, vfile, out_prefix);
 }
 }  // namespace cuda

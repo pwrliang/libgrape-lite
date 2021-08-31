@@ -13,7 +13,15 @@
 #include <string>
 #include <vector>
 
+#include "cuda_hashmap/hash_map.h"
 #include "grape/config.h"
+#include "grape/cuda/fragment/coo_fragment.h"
+#include "grape/cuda/fragment/device_fragment.h"
+#include "grape/cuda/fragment/id_parser.h"
+#include "grape/cuda/utils/cuda_utils.h"
+#include "grape/cuda/utils/dev_utils.h"
+#include "grape/cuda/utils/stream.h"
+#include "grape/cuda/vertex_map/device_vertex_map.h"
 #include "grape/fragment/edgecut_fragment_base.h"
 #include "grape/graph/adj_list.h"
 #include "grape/graph/edge.h"
@@ -23,15 +31,24 @@
 #include "grape/utils/vertex_array.h"
 #include "grape/vertex_map/global_vertex_map.h"
 
-#include "cuda_hashmap/hash_map.h"
-#include "grape/cuda/fragment/coo_fragment.h"
-#include "grape/cuda/fragment/device_fragment.h"
-#include "grape/cuda/fragment/id_parser.h"
-#include "grape/cuda/utils/cuda_utils.h"
-#include "grape/cuda/utils/dev_utils.h"
-#include "grape/cuda/vertex_map/device_vertex_map.h"
-
 namespace grape {
+namespace cuda {
+
+template <typename T, typename SIZE_T>
+inline void CalculateOffsetWithPrefixSum(const Stream& stream,
+                                         const ArrayView<SIZE_T>& prefix_sum,
+                                         T* begin_pointer, T** offset) {
+  auto size = prefix_sum.size();
+
+  LaunchKernel(stream, [=] __device__() {
+    auto tid = TID_1D;
+    auto nthreads = TOTAL_THREADS_1D;
+
+    for (size_t idx = 0 + tid; idx < size; idx += nthreads) {
+      offset[idx] = begin_pointer + prefix_sum[idx];
+    }
+  });
+}
 
 template <typename OID_T, typename VID_T, typename VDATA_T, typename EDATA_T,
           grape::LoadStrategy _load_strategy = grape::LoadStrategy::kOnlyOut>
@@ -51,9 +68,9 @@ class HostFragment {
   template <typename DATA_T>
   using vertex_array_t = grape::VertexArray<DATA_T, vid_t>;
   using vertex_map_t = grape::GlobalVertexMap<oid_t, vid_t>;
-  using dev_vertex_map_t = grape::DeviceVertexMap<oid_t, vid_t>;
+  using dev_vertex_map_t = cuda::DeviceVertexMap<oid_t, vid_t>;
   using device_t =
-      cuda::DeviceFragment<OID_T, VID_T, VDATA_T, EDATA_T, _load_strategy>;
+      dev::DeviceFragment<OID_T, VID_T, VDATA_T, EDATA_T, _load_strategy>;
   using coo_t = COOFragment<oid_t, vid_t, vdata_t, edata_t>;
 
   using IsEdgeCut = std::true_type;
@@ -1518,6 +1535,7 @@ class HostFragment {
 
   std::shared_ptr<coo_t> coo_frag_;
 };
+}  // namespace cuda
 }  // namespace grape
-#endif // WITH_CUDA
+#endif  // WITH_CUDA
 #endif  // GRAPE_CUDA_FRAGMENT_HOST_FRAGMENT_H_
