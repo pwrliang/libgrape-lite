@@ -5,74 +5,14 @@
 
 #include <cooperative_groups.h>
 
-#include "grape/types.h"
 #include "grape/cuda/utils/dev_utils.h"
 #include "grape/cuda/utils/shared_value.h"
 #include "grape/cuda/utils/vertex_array.h"
+#include "grape/types.h"
 
 namespace grape {
-
-template <typename VID_T, typename EDATA_T>
-class Edge {
- public:
-  Edge() = default;
-
-  DEV_HOST Edge(Vertex<VID_T> src, Vertex<VID_T> dst, EDATA_T data)
-      : src_(src), dst_(dst), data_(data) {}
-
-  DEV_HOST_INLINE Vertex<VID_T> src() const { return src_; }
-
-  DEV_HOST_INLINE Vertex<VID_T> dst() const { return dst_; }
-
-  DEV_HOST_INLINE EDATA_T& data() { return data_; }
-
-  DEV_HOST_INLINE const EDATA_T& data() const { return data_; }
-
- private:
-  Vertex<VID_T> src_;
-  Vertex<VID_T> dst_;
-  EDATA_T data_;
-};
-
-template <typename VID_T>
-class Edge<VID_T, grape::EmptyType> {
- public:
-  Edge() = default;
-
-  DEV_HOST Edge(const Edge<VID_T, grape::EmptyType>& rhs) {
-    src_ = rhs.src_;
-    dst_ = rhs.dst_;
-  }
-
-  DEV_HOST_INLINE Edge<VID_T, grape::EmptyType>& operator=(
-      const Edge<VID_T, grape::EmptyType>& rhs) {
-    src_ = rhs.src_;
-    dst_ = rhs.dst_;
-    return *this;
-  }
-
-  DEV_HOST Edge(Vertex<VID_T> src, Vertex<VID_T> dst) : src_(src), dst_(dst) {}
-
-  DEV_HOST Edge(Vertex<VID_T> src, Vertex<VID_T> dst, grape::EmptyType)
-      : src_(src), dst_(dst) {}
-
-  DEV_HOST_INLINE Vertex<VID_T> src() const { return src_; }
-
-  DEV_HOST_INLINE Vertex<VID_T> dst() const { return dst_; }
-
-  DEV_HOST_INLINE grape::EmptyType& data() { return data_; }
-
-  DEV_HOST_INLINE const grape::EmptyType& data() const { return data_; }
-
- private:
-  Vertex<VID_T> src_;
-  union {
-    Vertex<VID_T> dst_;
-    grape::EmptyType data_;
-  };
-};
-
 namespace cuda {
+namespace dev {
 template <typename OID_T, typename VID_T, typename VDATA_T, typename EDATA_T>
 class COOFragment {
  public:
@@ -112,7 +52,7 @@ class COOFragment {
  private:
   ArrayView<edge_t> edges_;
 };
-}  // namespace cuda
+}  // namespace dev
 
 template <typename OID_T, typename VID_T, typename VDATA_T, typename EDATA_T>
 class COOFragment {
@@ -134,6 +74,7 @@ class COOFragment {
  private:
   thrust::device_vector<edge_t> edges_;
 };
+}  // namespace cuda
 }  // namespace grape
-#endif // WITH_CUDA
+#endif  // WITH_CUDA
 #endif  // GRAPE_CUDA_FRAGMENT_COO_FRAGMENT_H_

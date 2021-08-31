@@ -10,7 +10,7 @@
 #include "grape/cuda/utils/stream.h"
 
 namespace grape {
-
+namespace cuda {
 template <typename T>
 class SharedValue {
   static_assert(std::is_pod<T>::value, "Unsupported datatype");
@@ -70,8 +70,8 @@ class SharedValue {
   thrust::host_vector<T, thrust::cuda::experimental::pinned_allocator<T>>
       h_buffer_;
 };
-
+}  // namespace cuda
 }  // namespace grape
 
-#endif WITH_GPU
+#endif  // WITH_GPU
 #endif  // GRAPE_CUDA_UTILS_SHARED_VALUE_H_

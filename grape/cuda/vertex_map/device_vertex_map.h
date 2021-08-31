@@ -3,18 +3,19 @@
 
 #ifdef WITH_CUDA
 #include "cuda_hashmap/hash_map.h"
-#include "grape/vertex_map/global_vertex_map.h"
 #include "grape/cuda/fragment/id_parser.h"
 #include "grape/cuda/utils/array_view.h"
 #include "grape/cuda/utils/cuda_utils.h"
 #include "grape/cuda/utils/launcher.h"
 #include "grape/cuda/utils/stream.h"
+#include "grape/vertex_map/global_vertex_map.h"
 
 namespace grape {
+namespace cuda {
 template <typename OID_T, typename VID_T>
 class DeviceVertexMap;
 
-namespace cuda {
+namespace dev {
 template <typename OID_T, typename VID_T>
 class DeviceVertexMap {
  public:
@@ -65,9 +66,9 @@ class DeviceVertexMap {
   ArrayView<ArrayView<OID_T>> l2o_;
 
   template <typename _OID_T, typename _VID_T>
-  friend class grape::DeviceVertexMap;
+  friend class grape::cuda::DeviceVertexMap;
 };
-}  // namespace cuda
+}  // namespace dev
 
 /**
  * @brief a kind of VertexMapBase which holds global mapping information in
@@ -154,7 +155,8 @@ class DeviceVertexMap {
   std::vector<thrust::device_vector<OID_T>> d_l2o_;
   thrust::device_vector<ArrayView<OID_T>> d_l2o_ptr_;
 };
+}  // namespace cuda
 
 }  // namespace grape
-#endif // WITH_GPU
+#endif  // WITH_GPU
 #endif  // GRAPE_CUDA_VERTEX_MAP_DEVICE_VERTEX_MAP_H_

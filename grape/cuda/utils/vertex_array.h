@@ -5,154 +5,14 @@
 
 #include <cub/util_type.cuh>
 
-#include "grape/utils/gcontainer.h"
 #include "grape/cuda/utils/cuda_utils.h"
 #include "grape/cuda/utils/stream.h"
+#include "grape/utils/gcontainer.h"
+#include "grape/utils/vertex_array.h"
 
 namespace grape {
-
-/**
- * @brief  A Vertex object only contains id of a vertex.
- * It will be used when iterating vertices of a fragment and
- * accessing data and neighbor of a vertex.
- *
- * @tparam T Vertex ID type.
- */
-template <typename T>
-class Vertex {
- public:
-  Vertex() = default;
-  DEV_HOST explicit Vertex(T value) : value_(value) {}
-  DEV_HOST Vertex(const Vertex& rhs) : value_(rhs.value_) {}
-  DEV_HOST Vertex(Vertex&& rhs) noexcept : value_(rhs.value_) {}
-
-  DEV_HOST_INLINE Vertex& operator=(const Vertex& rhs) {
-    value_ = rhs.value_;
-    return *this;
-  }
-
-  DEV_HOST_INLINE Vertex& operator=(Vertex&& rhs) noexcept {
-    value_ = rhs.value_;
-    return *this;
-  }
-
-  DEV_HOST_INLINE Vertex& operator=(T value) {
-    value_ = value;
-    return *this;
-  }
-
-  DEV_HOST_INLINE Vertex& operator++() {
-    value_++;
-    return *this;
-  }
-
-  DEV_HOST_INLINE Vertex operator++(int) {
-    Vertex res(value_);
-    value_++;
-    return res;
-  }
-
-  DEV_HOST_INLINE Vertex& operator--() {
-    value_--;
-    return *this;
-  }
-
-  DEV_HOST_INLINE Vertex operator--(int) {
-    Vertex res(value_);
-    value_--;
-    return res;
-  }
-
-  DEV_HOST_INLINE Vertex operator+(T inc) const { return Vertex(value_ + inc); }
-
-  DEV_HOST_INLINE bool operator==(const Vertex& rhs) const {
-    return value_ == rhs.value_;
-  }
-
-  DEV_HOST_INLINE bool operator!=(const Vertex& rhs) const {
-    return value_ != rhs.value_;
-  }
-
-  void Swap(Vertex& rhs) { std::swap(value_, rhs.value_); }
-
-  DEV_HOST_INLINE bool operator<(const Vertex& rhs) const {
-    return value_ < rhs.value_;
-  }
-
-  DEV_HOST_INLINE bool operator>(const Vertex& rhs) const {
-    return value_ > rhs.value_;
-  }
-
-  DEV_HOST_INLINE Vertex& operator*() { return *this; }
-
-  DEV_HOST_INLINE T GetValue() const { return value_; }
-
-  DEV_HOST_INLINE void SetValue(T value) { value_ = value; }
-
- private:
-  T value_;
-};
-
-template <typename T>
-bool operator<(Vertex<T> const& lhs, Vertex<T> const& rhs) {
-  return lhs.GetValue() < rhs.GetValue();
-}
-
-template <typename T>
-bool operator==(Vertex<T> const& lhs, Vertex<T> const& rhs) {
-  return lhs.GetValue() == rhs.GetValue();
-}
-
-template <typename VID_T>
-grape::InArchive& operator<<(grape::InArchive& archive,
-                             const Vertex<VID_T>& v) {
-  archive << v.GetValue();
-  return archive;
-}
-
-template <typename VID_T>
-grape::OutArchive& operator>>(grape::OutArchive& archive, Vertex<VID_T>& v) {
-  VID_T vid;
-  archive >> vid;
-  v.SetValue(vid);
-  return archive;
-}
-
-template <typename T>
-class VertexRange {
- public:
-  VertexRange() = default;
-  DEV_HOST VertexRange(T begin, T end)
-      : begin_(begin), end_(end), size_(end - begin) {}
-  DEV_HOST VertexRange(const Vertex<T>& begin, const Vertex<T>& end)
-      : begin_(begin), end_(end), size_(end.GetValue() - begin.GetValue()) {}
-  DEV_HOST VertexRange(const VertexRange& r)
-      : begin_(r.begin_), end_(r.end_), size_(r.size_) {}
-
-  DEV_HOST_INLINE const Vertex<T>& begin() const { return begin_; }
-
-  DEV_HOST_INLINE const Vertex<T>& end() const { return end_; }
-
-  DEV_HOST_INLINE size_t size() const { return size_; }
-
-  void Swap(VertexRange& rhs) {
-    begin_.Swap(rhs.begin_);
-    end_.Swap(rhs.end_);
-    std::swap(size_, rhs.size_);
-  }
-
-  void SetRange(T begin, T end) {
-    begin_ = begin;
-    end_ = end;
-    size_ = end - begin;
-  }
-
- private:
-  Vertex<T> begin_, end_;
-  size_t size_{};
-};
-
 namespace cuda {
+namespace dev {
 template <typename T, typename VID_T>
 class VertexArray {
  public:
@@ -173,9 +33,7 @@ class VertexArray {
 
   DEV_HOST_INLINE T* data() { return data_; }
 
-  DEV_HOST_INLINE size_t size() const {
-    return range_.size();
-  }
+  DEV_HOST_INLINE size_t size() const { return range_.size(); }
 
  private:
   VertexRange<VID_T> range_;
@@ -183,7 +41,7 @@ class VertexArray {
   T* fake_start_{};
 };
 
-}  // namespace cuda
+}  // namespace dev
 
 template <typename T, typename VID_T>
 class VertexArray : public grape::Array<T, grape::Allocator<T>> {
@@ -263,8 +121,8 @@ class VertexArray : public grape::Array<T, grape::Allocator<T>> {
   const VertexRange<VID_T>& GetVertexRange() const { return range_; }
 
   cuda::VertexArray<T, VID_T> DeviceObject() {
-    return cuda::VertexArray<T, VID_T>(range_,
-                                      thrust::raw_pointer_cast(d_data_.data()));
+    return cuda::VertexArray<T, VID_T>(
+        range_, thrust::raw_pointer_cast(d_data_.data()));
   }
 
   void H2D() {
@@ -294,6 +152,9 @@ class VertexArray : public grape::Array<T, grape::Allocator<T>> {
   T* fake_start_;
   thrust::device_vector<T> d_data_;
 };
+
+}  // namespace cuda
+
 }  // namespace grape
 
 namespace cub {
@@ -304,5 +165,5 @@ struct Traits<grape::Vertex<T>>
 
 }  // namespace cub
 
-#endif // WITH_CUDA
+#endif  // WITH_CUDA
 #endif  // GRAPE_CUDA_UTILS_DEV_VERTEX_ARRAY_H_
