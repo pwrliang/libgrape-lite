@@ -1,10 +1,11 @@
 
-#ifndef GRAPE_UTILS_SORTED_SEARCH_H_
-#define GRAPE_UTILS_SORTED_SEARCH_H_
+#ifndef GRAPE_CUDA_UTILS_SORTED_SEARCH_H_
+#define GRAPE_CUDA_UTILS_SORTED_SEARCH_H_
 #include <thrust/device_vector.h>
 
-#include "grape/utils/cuda_utils.h"
-#include "grape/utils/launcher.h"
+#include "grape/config.h"
+#include "grape/cuda/utils/cuda_utils.h"
+#include "grape/cuda/utils/launcher.h"
 #include "moderngpu/kernel_sortedsearch.hxx"
 
 namespace grape {
@@ -16,7 +17,7 @@ void merge_path_partitions(const Stream& stream,
                            int64_t a_count, b_keys_it b, int64_t b_count,
                            int64_t spacing, comp_t comp) {
   typedef int int_t;
-  auto num_partitions = round_up(a_count + b_count, spacing) + 1;
+  auto num_partitions = dev::round_up(a_count + b_count, spacing) + 1;
 
   partitions.resize(num_partitions);
 
@@ -52,7 +53,7 @@ void sorted_search(const Stream& stream, needles_it needles, int num_needles,
 
   size_t num_partitions = partitions.size();
   const int* mp_data = thrust::raw_pointer_cast(partitions.data());
-  auto size = round_up(num_needles + num_haystack, nv);
+  auto size = dev::round_up(num_needles + num_haystack, nv);
   dim3 grid_dims(size, 1, 1), block_dims(nt, 1, 1);
 
   KernelWrapper<<<grid_dims, block_dims, 0, stream.cuda_stream()>>>(
@@ -94,4 +95,4 @@ void sorted_search(const Stream& stream, needles_it needles, int num_needles,
 
 }  // namespace grape
 
-#endif  // GRAPE_UTILS_SORTED_SEARCH_H_
+#endif  // GRAPE_CUDA_UTILS_SORTED_SEARCH_H_

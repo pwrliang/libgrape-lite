@@ -260,7 +260,7 @@ else ()
     install_libgrapelite_target(analytical_apps)
 
     if (WITH_CUDA)
-        cuda_add_executable(run_cuda_app examples/analytical_apps/flags.cc examples/analytical_apps/gpu/run_cuda_app.cu)
+        cuda_add_executable(run_cuda_app examples/analytical_apps/flags.cc examples/analytical_apps/run_cuda_app.cu)
         target_include_directories(run_cuda_app PRIVATE examples/analytical_apps/)
         target_link_libraries(run_cuda_app grape-lite ${MPI_CXX_LIBRARIES}
                 ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${CMAKE_DL_LIBS} ${CUDA_LIBS})
