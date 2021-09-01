@@ -20,6 +20,8 @@
 
 #include "flags.h"
 #include "grape/cuda/fragment/host_fragment.h"
+#include "grape/cuda/worker/gpu_batch_shuffle_worker.h"
+#include "grape/cuda/worker/gpu_worker.h"
 #include "grape/fragment/loader.h"
 #include "grape/worker/comm_spec.h"
 #include "timer.h"

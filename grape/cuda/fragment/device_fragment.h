@@ -1,5 +1,5 @@
-#ifndef GRAPE_GPU_FRAGMENT_DEVICE_FRAGMENT_H_
-#define GRAPE_GPU_FRAGMENT_DEVICE_FRAGMENT_H_
+#ifndef GRAPE_CUDA_FRAGMENT_DEVICE_FRAGMENT_H_
+#define GRAPE_CUDA_FRAGMENT_DEVICE_FRAGMENT_H_
 #ifdef WITH_CUDA
 #include "cuda_hashmap/hash_map.h"
 #include "grape/cuda/fragment/id_parser.h"
@@ -425,4 +425,4 @@ class DeviceFragment {
 }  // namespace cuda
 }  // namespace grape
 #endif
-#endif  // GRAPE_GPU_FRAGMENT_DEVICE_FRAGMENT_H_
+#endif  // GRAPE_CUDA_FRAGMENT_DEVICE_FRAGMENT_H_
