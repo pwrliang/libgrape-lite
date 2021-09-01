@@ -56,10 +56,10 @@ void CreateAndQuery(const grape::CommSpec& comm_spec, const std::string& efile,
   LoadGraphSpec graph_spec = DefaultLoadGraphSpec();
 
   // TODO:
-//  graph_spec.set_skip_first_valid_line(FLAGS_mtx);
+  graph_spec.set_skip_first_valid_line(FLAGS_mtx);
   graph_spec.set_directed(FLAGS_directed);
   graph_spec.set_rebalance(FLAGS_rebalance, FLAGS_rebalance_vertex_factor);
-//  graph_spec.set_rm_self_cycle(FLAGS_rm_self_cycle);
+  graph_spec.set_rm_self_cycle(FLAGS_rm_self_cycle);
 
   std::string serialization_prefix = FLAGS_serialization_prefix;
 

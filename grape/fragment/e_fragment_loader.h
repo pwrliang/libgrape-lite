@@ -155,16 +155,21 @@ class EFragmentLoader {
       }
 
       if (spec.skip_first_valid_line) {
-        int victim; // victim skip the first valid line
-        MPI_Allreduce(&skip, &victim, 1, MPI_INT, MPI_SUM, comm_spec_.comm());
-        if( = comm_spec_.worker_id() > victim ) {
-          basic_fragment_loader_.AddEdge(fsrc, fdst, fe_data);
-          basic_fragment_loader_.AddVertex(fsrc, fake_data);
-          basic_fragment_loader_.AddVertex(fdst, fake_data);
+        int all_comment = skip * (lineNo > 0);
+        int victim=0; // victim skip the first valid line
+        MPI_Allreduce(&all_comment, &victim, 1, MPI_INT, MPI_SUM, comm_spec_.comm());
+        if( comm_spec_.worker_id() > victim && !skip) {
 
-          if (!spec.directed) {
-            basic_fragment_loader_.AddEdge(fdst, fsrc, e_data);
-          }   
+          if (fsrc == fdst && spec.rm_self_cycle) {
+          }else{
+            basic_fragment_loader_.AddEdge(fsrc, fdst, fe_data);
+            basic_fragment_loader_.AddVertex(fsrc, fake_data);
+            basic_fragment_loader_.AddVertex(fdst, fake_data);
+  
+            if (!spec.directed) {
+              basic_fragment_loader_.AddEdge(fdst, fsrc, e_data);
+            }   
+          }
         }
       }
 

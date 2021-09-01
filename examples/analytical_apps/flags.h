@@ -41,4 +41,6 @@ DECLARE_string(serialization_prefix);
 
 DECLARE_int32(app_concurrency);
 
+DECLARE_bool(mtx);
+DECLARE_bool(rm_self_cycle);
 #endif  // EXAMPLES_ANALYTICAL_APPS_FLAGS_H_
