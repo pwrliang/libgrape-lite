@@ -1,4 +1,4 @@
-project(libgrape-lite C CXX CUDA)
+project(libgrape-lite C CXX)
 cmake_minimum_required(VERSION 2.8)
 
 set(LIBGRAPELITE_MAJOR_VERSION 0)
@@ -29,9 +29,6 @@ endif ()
 include_directories(thirdparty)
 if (WITH_CUDA)
     message("-- Build with CUDA support")
-    include_directories(thirdparty/cub)
-    include_directories(thirdparty/thrust)
-    include_directories(thirdparty/moderngpu/src)
     add_definitions(-DWITH_CUDA)
 endif ()
 # ------------------------------------------------------------------------------
@@ -261,7 +258,7 @@ else ()
 
     if (WITH_CUDA)
         cuda_add_executable(run_cuda_app examples/analytical_apps/flags.cc examples/analytical_apps/run_cuda_app.cu)
-        target_include_directories(run_cuda_app PRIVATE examples/analytical_apps/)
+        target_include_directories(run_cuda_app PRIVATE examples/analytical_apps thirdparty/cub thirdparty/thrust thirdparty/moderngpu/src)
         target_link_libraries(run_cuda_app grape-lite ${MPI_CXX_LIBRARIES}
                 ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${CMAKE_DL_LIBS} ${CUDA_LIBS})
     endif ()

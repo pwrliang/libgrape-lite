@@ -33,7 +33,7 @@ limitations under the License.
 #include "grape/worker/batch_shuffle_worker.h"
 #include "grape/worker/parallel_worker.h"
 
-#ifdef WITH_CUDA
+#ifdef __CUDACC__
 #include "grape/cuda/app/batch_shuffle_app_base.h"
 #include "grape/cuda/app/gpu_app_base.h"
 #include "grape/cuda/communication/communicator.h"
