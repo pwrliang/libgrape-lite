@@ -130,9 +130,9 @@ class DeviceVertexMap {
     }
   }
 
-  cuda::DeviceVertexMap<OID_T, VID_T> DeviceObject() {
+  dev::DeviceVertexMap<OID_T, VID_T> DeviceObject() {
     auto& comm_spec = vm_ptr_->GetCommSpec();
-    cuda::DeviceVertexMap<OID_T, VID_T> dev_vm;
+    dev::DeviceVertexMap<OID_T, VID_T> dev_vm;
 
     dev_vm.fnum_ = comm_spec.fnum();
     dev_vm.id_parser_ = id_parser_;

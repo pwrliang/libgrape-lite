@@ -55,6 +55,7 @@ using Allocator = DefaultAllocator<T>;
 #else
 #define DEV_HOST
 #define DEV_HOST_INLINE inline
+#define DEV_INLINE
 #endif
 
 #ifdef WITH_CUDA

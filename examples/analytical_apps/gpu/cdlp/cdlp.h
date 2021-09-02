@@ -4,11 +4,11 @@
 #ifdef WITH_CUDA
 #include <algorithm>
 
-#include "app_config.h"
+#include "gpu/app_config.h"
 #include "grape/grape.h"
 
 namespace grape {
-namespace cuda{
+namespace cuda {
 template <typename FRAG_T>
 class CDLPContext : public grape::VoidContext<FRAG_T> {
  public:
@@ -315,5 +315,5 @@ class CDLP : public GPUAppBase<FRAG_T, CDLPContext<FRAG_T>>,
 };
 }  // namespace cuda
 }  // namespace grape
-#endif // WITH_CUDA
+#endif  // WITH_CUDA
 #endif  // EXAMPLES_ANALYTICAL_APPS_GPU_CDLP_CDLP_H_

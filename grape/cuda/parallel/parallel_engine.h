@@ -8,6 +8,7 @@
 #include <moderngpu/kernel_sortedsearch.hxx>
 #include <unordered_set>
 
+#include "grape/config.h"
 #include "grape/cuda/utils/array_view.h"
 #include "grape/cuda/utils/dev_utils.h"
 #include "grape/cuda/utils/launcher.h"
@@ -92,7 +93,6 @@ inline void ForEachWithIndex(const Stream& stream,
       func, args...);
 }
 
-namespace dev {
 template <typename VID_T, typename METADATA_T>
 struct VertexMetadata {
   Vertex<VID_T> vertex;
@@ -421,7 +421,7 @@ DEV_INLINE void LBNONE(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
   auto nthreads = TOTAL_THREADS_1D;
   auto size = work_source.size();
   using metadata_t = typename std::result_of<ASSIGN_OP&(vertex_t&)>::type;
-  using vertex_metadata_t = dev::VertexMetadata<vid_t, metadata_t>;
+  using vertex_metadata_t = VertexMetadata<vid_t, metadata_t>;
 
   for (size_t i = 0 + tid; i < size; i += nthreads) {
     auto v = work_source.GetWork(i);
@@ -449,9 +449,9 @@ DEV_INLINE void LBCMOld(const FRAG_T& dev_frag,
 
   extern __shared__ char shared_lb_cm_old[];
   auto* vertices =
-      (dev::VertexMetadata<vid_t,
-                           metadata_t>*) &shared_lb_cm_old[0];  // len =
-                                                                // block_size
+      (VertexMetadata<vid_t,
+                      metadata_t>*) &shared_lb_cm_old[0];  // len =
+                                                           // block_size
   auto** nbr_begin =
       (const nbr_t**) &vertices[blockDim.x];           // len == block size
   auto* row_offset = (vid_t*) &nbr_begin[blockDim.x];  // len = block size
@@ -461,7 +461,7 @@ DEV_INLINE void LBCMOld(const FRAG_T& dev_frag,
   auto tid = TID_1D;
   auto nthreads = TOTAL_THREADS_1D;
   auto size = work_source.size();
-  auto aligned_size = round_up(size, blockDim.x) * blockDim.x;
+  auto aligned_size = dev::round_up(size, blockDim.x) * blockDim.x;
 
   assert(blockDim.x <= MAX_BLOCK_SIZE);
 
@@ -516,7 +516,7 @@ DEV_INLINE void LBCM(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
   using metadata_t = typename std::result_of<ASSIGN_OP&(vertex_t&)>::type;
 
   extern __shared__ char shared_lb_cm[];
-  auto* vertices = (dev::VertexMetadata<vid_t, metadata_t>*) &shared_lb_cm[0];
+  auto* vertices = (VertexMetadata<vid_t, metadata_t>*) &shared_lb_cm[0];
   auto** nbr_begin = (const nbr_t**) &vertices[blockDim.x];
   auto* prefix_sum = (vid_t*) &nbr_begin[blockDim.x];
   size_t size = work_source.size();
@@ -548,7 +548,7 @@ DEV_INLINE void LBCM(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
       __syncthreads();
 
       for (auto eid = threadIdx.x; eid < block_output_size; eid += blockDim.x) {
-        auto v_idx = BinarySearch<MAX_BLOCK_SIZE>(prefix_sum, (vid_t) eid);
+        auto v_idx = dev::BinarySearch<MAX_BLOCK_SIZE>(prefix_sum, (vid_t) eid);
         auto offset = eid - (v_idx > 0 ? prefix_sum[v_idx - 1] : 0);
         assert(nbr_begin[v_idx] != nullptr);
         auto* nbr = nbr_begin[v_idx] + offset;
@@ -572,9 +572,9 @@ DEV_INLINE void LBWARP(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
 
   extern __shared__ char shared_lb_warp[];
   auto* vertices =
-      (dev::VertexMetadata<vid_t,
-                           metadata_t>*) &shared_lb_warp[0];  // len =
-                                                              // block_size
+      (VertexMetadata<vid_t,
+                      metadata_t>*) &shared_lb_warp[0];  // len =
+                                                         // block_size
   auto** nbr_begin =
       (const nbr_t**) &vertices[blockDim.x];  // len == block size
   auto* row_offset =
@@ -588,7 +588,7 @@ DEV_INLINE void LBWARP(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
   auto local_tid = threadIdx.x % warp_size;
   auto nthreads = TOTAL_THREADS_1D;
   auto size = work_source.size();
-  auto aligned_size = round_up(size, warp_size) * warp_size;
+  auto aligned_size = dev::round_up(size, warp_size) * warp_size;
 
   vertices = &vertices[warp_id * warp_size];
   nbr_begin = &nbr_begin[warp_id * warp_size];
@@ -638,6 +638,7 @@ template <typename FRAG_T, typename WORK_SOURCE_T, typename ASSIGN_OP,
           typename EDGE_OP, EdgeDirection ed>
 DEV_INLINE void LBCTA(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
                       ASSIGN_OP assign_op, EDGE_OP op) {
+  /*FIXME:
   using edata_t = typename FRAG_T::edata_t;
   using vertex_t = typename FRAG_T::vertex_t;
   using vid_t = typename FRAG_T::vid_t;
@@ -647,10 +648,10 @@ DEV_INLINE void LBCTA(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
   auto size = work_source.size();
   auto size_rup = round_up(size, blockDim.x) * blockDim.x;
   using metadata_t = typename std::result_of<ASSIGN_OP&(vertex_t&)>::type;
-  using vertex_metadata_t = dev::VertexMetadata<vid_t, metadata_t>;
+  using vertex_metadata_t = VertexMetadata<vid_t, metadata_t>;
 
   for (auto i = 0 + tid; i < size_rup; i += nthreads) {
-    dev::np_local<vid_t, edata_t, vertex_metadata_t> np_local;
+    np_local<vid_t, edata_t, vertex_metadata_t> np_local;
 
     if (i < size) {
       vertex_metadata_t vm;
@@ -659,13 +660,14 @@ DEV_INLINE void LBCTA(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
 
       vm.set_vertex(v);
       vm.set_metadata(assign_op(v));
-      np_local = dev::np_local<vid_t, edata_t, vertex_metadata_t>(adj_list, vm);
+      np_local = np_local<vid_t, edata_t, vertex_metadata_t>(adj_list, vm);
     }
 
     dev::CTAWorkScheduler<vid_t, edata_t, vertex_metadata_t>::schedule(
         np_local, [=](const Nbr<vid_t, edata_t>& nbr,
                       const vertex_metadata_t& vm) mutable { op(vm, nbr); });
   }
+   */
 }
 
 template <typename FRAG_T, typename WORK_SOURCE_T, typename ASSIGN_OP,
@@ -679,7 +681,7 @@ DEV_INLINE void LBSTRICT(const FRAG_T& dev_frag, const ArrayView<size_t>& sidx,
   using vertex_t = typename FRAG_T::vertex_t;
   using nbr_t = typename FRAG_T::nbr_t;
   using metadata_t = typename std::result_of<ASSIGN_OP&(vertex_t&)>::type;
-  using vertex_metadata_t = dev::VertexMetadata<vid_t, metadata_t>;
+  using vertex_metadata_t = VertexMetadata<vid_t, metadata_t>;
 
   extern __shared__ void* shared_lb_strict[];
   auto* vertices = (vertex_metadata_t*) &shared_lb_strict;
@@ -747,7 +749,7 @@ DEV_INLINE void LBSTRICT(const FRAG_T& dev_frag, const ArrayView<size_t>& sidx,
 
     for (vid_t eid = threadIdx.x + block_output_processed;
          eid < iter_output_end_offset; eid += blockDim.x) {
-      auto v_idx = BinarySearch<MAX_BLOCK_SIZE>(prefix_sum, (size_t) eid);
+      auto v_idx = dev::BinarySearch<MAX_BLOCK_SIZE>(prefix_sum, (size_t) eid);
 
       if (v_idx > 0) {
         block_first_v_skip_count = 0;
@@ -766,7 +768,6 @@ DEV_INLINE void LBSTRICT(const FRAG_T& dev_frag, const ArrayView<size_t>& sidx,
     __syncthreads();
   }
 }
-}  // namespace dev
 
 class ParallelEngine {
  public:
@@ -779,27 +780,30 @@ class ParallelEngine {
   inline void ForEachEdge(const Stream& stream, const FRAG_T& dev_frag,
                           const WORK_SOURCE_T& ws, ASSIGN_OP assign_op,
                           EDGE_OP op, LoadBalancing lb) {
-    if (lb == LoadBalancing::kCMOld) {
-      ForEachEdgeCMOld<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-          stream, dev_frag, ws, assign_op, op);
-    } else if (lb == LoadBalancing::kCM) {
-      ForEachEdgeCM<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-          stream, dev_frag, ws, assign_op, op);
-    } else if (lb == LoadBalancing::kWarp) {
-      ForEachEdgeWarp<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-          stream, dev_frag, ws, assign_op, op);
-    } else if (lb == LoadBalancing::kCTA) {
-      ForEachEdgeCTA<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-          stream, dev_frag, ws, assign_op, op);
-    } else if (lb == LoadBalancing::kStrict) {
-      ForEachEdgeStrict<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-          stream, dev_frag, ws, assign_op, op);
-    } else if (lb == LoadBalancing::kNone) {
-      ForEachEdgeNone<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-          stream, dev_frag, ws, assign_op, op);
-    } else {
-      LOG(FATAL) << "Invalid lb policy";
-    }
+    ForEachEdgeNone<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+        stream, dev_frag, ws, assign_op, op);
+
+//    if (lb == LoadBalancing::kCMOld) {
+//      ForEachEdgeCMOld<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+//          stream, dev_frag, ws, assign_op, op);
+//    } else if (lb == LoadBalancing::kCM) {
+//      ForEachEdgeCM<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+//          stream, dev_frag, ws, assign_op, op);
+//    } else if (lb == LoadBalancing::kWarp) {
+//      ForEachEdgeWarp<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+//          stream, dev_frag, ws, assign_op, op);
+//    } else if (lb == LoadBalancing::kCTA) {
+//      ForEachEdgeCTA<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+//          stream, dev_frag, ws, assign_op, op);
+//    } else if (lb == LoadBalancing::kStrict) {
+//      ForEachEdgeStrict<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+//          stream, dev_frag, ws, assign_op, op);
+//    } else if (lb == LoadBalancing::kNone) {
+//      ForEachEdgeNone<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+//          stream, dev_frag, ws, assign_op, op);
+//    } else {
+//      LOG(FATAL) << "Invalid lb policy";
+//    }
   }
 
   template <typename FRAG_T, typename WORK_SOURCE_T, typename ASSIGN_OP,
@@ -823,7 +827,7 @@ class ParallelEngine {
         stream, dev_frag, ws,
         [] __device__(vertex_t) -> grape::EmptyType { return {}; },
         [=] __device__(
-            const dev::VertexMetadata<vid_t, grape::EmptyType>& vertex_metadata,
+            const VertexMetadata<vid_t, grape::EmptyType>& vertex_metadata,
             const nbr_t& nbr) mutable { op(vertex_metadata.vertex, nbr); },
         lb);
   }
@@ -852,7 +856,7 @@ class ParallelEngine {
         stream, dev_frag, ws,
         [] __device__(vertex_t) -> grape::EmptyType { return {}; },
         [=] __device__(
-            const dev::VertexMetadata<vid_t, grape::EmptyType>& vertex_metadata,
+            const VertexMetadata<vid_t, grape::EmptyType>& vertex_metadata,
             const nbr_t& nbr) mutable { op(vertex_metadata.vertex, nbr); },
         lb);
   }
@@ -881,7 +885,7 @@ class ParallelEngine {
         stream, dev_frag, ws,
         [] __device__(vertex_t) -> grape::EmptyType { return {}; },
         [=] __device__(
-            const dev::VertexMetadata<vid_t, grape::EmptyType>& vertex_metadata,
+            const VertexMetadata<vid_t, grape::EmptyType>& vertex_metadata,
             const nbr_t& nbr) mutable { op(vertex_metadata.vertex, nbr); },
         lb);
   }
@@ -907,7 +911,7 @@ class ParallelEngine {
         stream, dev_frag, ws,
         [] __device__(vertex_t) -> grape::EmptyType { return {}; },
         [=] __device__(
-            const dev::VertexMetadata<vid_t, grape::EmptyType>& vertex_metadata,
+            const VertexMetadata<vid_t, grape::EmptyType>& vertex_metadata,
             const nbr_t& nbr) mutable { op(vertex_metadata.vertex, nbr); },
         lb);
   }
@@ -936,7 +940,7 @@ class ParallelEngine {
         stream, dev_frag, ws,
         [] __device__(vertex_t) -> grape::EmptyType { return {}; },
         [=] __device__(
-            const dev::VertexMetadata<vid_t, grape::EmptyType>& vertex_metadata,
+            const VertexMetadata<vid_t, grape::EmptyType>& vertex_metadata,
             const nbr_t& nbr) mutable { op(vertex_metadata.vertex, nbr); },
         lb);
   }
@@ -966,7 +970,7 @@ class ParallelEngine {
         stream, dev_frag, ws,
         [] __device__(vertex_t) -> grape::EmptyType { return {}; },
         [=] __device__(
-            const dev::VertexMetadata<vid_t, grape::EmptyType>& vertex_metadata,
+            const VertexMetadata<vid_t, grape::EmptyType>& vertex_metadata,
             const nbr_t& nbr) mutable { op(vertex_metadata.vertex, nbr); },
         lb);
   }
@@ -990,14 +994,14 @@ class ParallelEngine {
       using nbr_t = typename FRAG_T::nbr_t;
       using metadata_t = typename std::result_of<ASSIGN_OP&(vertex_t&)>::type;
 
-      return block_size * (sizeof(dev::VertexMetadata<vid_t, metadata_t>) +
+      return block_size * (sizeof(VertexMetadata<vid_t, metadata_t>) +
                            sizeof(const nbr_t*) + sizeof(vid_t));
     };
     ArrayView<size_t> row_offset_view(
         thrust::raw_pointer_cast(prefix_sum_.data()), size);
 
     auto lb_wrapper = [=] __device__() {
-      dev::LBCM<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+      LBCM<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
           dev_frag, ws, row_offset_view, assign_op, op);
     };
 
@@ -1014,8 +1018,8 @@ class ParallelEngine {
     int grid_size, block_size;
 
     auto lb_wrapper = [=] __device__() {
-      dev::LBCTA<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(dev_frag, ws,
-                                                                assign_op, op);
+      LBCTA<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(dev_frag, ws,
+                                                           assign_op, op);
     };
 
     KernelSizing(grid_size, block_size, ws.size());
@@ -1035,12 +1039,12 @@ class ParallelEngine {
       using nbr_t = typename FRAG_T::nbr_t;
       using metadata_t = typename std::result_of<ASSIGN_OP&(vertex_t&)>::type;
 
-      return block_size * (sizeof(dev::VertexMetadata<vid_t, metadata_t>) +
+      return block_size * (sizeof(VertexMetadata<vid_t, metadata_t>) +
                            sizeof(const nbr_t*) + sizeof(vid_t));
     };
     auto lb_wrapper = [=] __device__() {
-      dev::LBCMOld<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-          dev_frag, ws, assign_op, op);
+      LBCMOld<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(dev_frag, ws,
+                                                             assign_op, op);
     };
 
     KernelSizing(grid_size, block_size, ws.size());
@@ -1063,13 +1067,13 @@ class ParallelEngine {
       int warp_size = 32;
       auto n_warp = (block_size + warp_size - 1) / warp_size;
 
-      return block_size * (sizeof(dev::VertexMetadata<vid_t, metadata_t>) +
+      return block_size * (sizeof(VertexMetadata<vid_t, metadata_t>) +
                            sizeof(const nbr_t*)) +
              n_warp * warp_size * sizeof(vid_t);
     };
     auto lb_wrapper = [=] __device__() {
-      dev::LBWARP<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(dev_frag, ws,
-                                                                 assign_op, op);
+      LBWARP<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(dev_frag, ws,
+                                                            assign_op, op);
     };
 
     KernelSizing(grid_size, block_size, ws.size());
@@ -1096,14 +1100,14 @@ class ParallelEngine {
     auto lb_wrapper = [=] __device__(const ArrayView<size_t>& sidx,
                                      const ArrayView<size_t>& row_offset,
                                      size_t partition_size) {
-      dev::LBSTRICT<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+      LBSTRICT<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
           dev_frag, sidx, row_offset, partition_size, ws, assign_op, op);
     };
     auto calc_shmem_size = [] DEV_HOST(int block_size) -> int {
       using nbr_t = typename FRAG_T::nbr_t;
       using vid_t = typename FRAG_T::vid_t;
       using metadata_t = typename std::result_of<ASSIGN_OP&(vertex_t&)>::type;
-      using vertex_metadata_t = dev::VertexMetadata<vid_t, metadata_t>;
+      using vertex_metadata_t = VertexMetadata<vid_t, metadata_t>;
 
       return block_size * (sizeof(const nbr_t*) + sizeof(vertex_metadata_t) +
                            sizeof(size_t));
@@ -1152,8 +1156,8 @@ class ParallelEngine {
                               EDGE_OP op) {
     int grid_size, block_size;
     auto lb_wrapper = [=] __device__() {
-      dev::LBNONE<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(dev_frag, ws,
-                                                                 assign_op, op);
+      LBNONE<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(dev_frag, ws,
+                                                            assign_op, op);
     };
 
     KernelSizing(grid_size, block_size, ws.size());
@@ -1183,7 +1187,7 @@ class ParallelEngine {
     auto* d_prefix_sum = thrust::raw_pointer_cast(prefix_sum_.data());
 
     ForEachWithIndex(stream, ws, [=] __device__(size_t idx, vertex_t v) {
-      d_degree[idx] = dev::GetAdjList<FRAG_T, ed>(dev_frag, v).Size();
+      d_degree[idx] = GetAdjList<FRAG_T, ed>(dev_frag, v).Size();
     });
 
     void* d_temp_storage = nullptr;

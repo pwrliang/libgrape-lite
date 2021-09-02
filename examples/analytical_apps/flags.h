@@ -43,4 +43,10 @@ DECLARE_int32(app_concurrency);
 
 DECLARE_bool(mtx);
 DECLARE_bool(rm_self_cycle);
+
+DECLARE_string(lb);
+DECLARE_double(wl_alloc_factor_in);
+DECLARE_double(wl_alloc_factor_out_local);
+DECLARE_double(wl_alloc_factor_out_remote);
+DECLARE_int32(sssp_prio);
 #endif  // EXAMPLES_ANALYTICAL_APPS_FLAGS_H_

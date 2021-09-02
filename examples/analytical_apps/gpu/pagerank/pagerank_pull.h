@@ -1,7 +1,7 @@
 #ifndef EXAMPLES_ANALYTICAL_APPS_GPU_PAGERANK_PAGERANK_PULL_H_
 #define EXAMPLES_ANALYTICAL_APPS_GPU_PAGERANK_PAGERANK_PULL_H_
 #ifdef WITH_CUDA
-#include "app_config.h"
+#include "gpu/app_config.h"
 #include "grape/grape.h"
 namespace grape {
 namespace cuda {
@@ -151,5 +151,5 @@ class PagerankPull
 };
 }  // namespace cuda
 }  // namespace grape
-#endif // WITH_CUDA
+#endif  // WITH_CUDA
 #endif  // EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_PULL_H_

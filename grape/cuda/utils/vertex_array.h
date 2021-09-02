@@ -120,8 +120,8 @@ class VertexArray : public grape::Array<T, grape::Allocator<T>> {
 
   const VertexRange<VID_T>& GetVertexRange() const { return range_; }
 
-  cuda::VertexArray<T, VID_T> DeviceObject() {
-    return cuda::VertexArray<T, VID_T>(
+  dev::VertexArray<T, VID_T> DeviceObject() {
+    return dev::VertexArray<T, VID_T>(
         range_, thrust::raw_pointer_cast(d_data_.data()));
   }
 

@@ -3,11 +3,11 @@
 #ifdef WITH_CUDA
 #include <iomanip>
 
-#include "app_config.h"
+#include "gpu/app_config.h"
 #include "grape/grape.h"
 
 namespace grape {
-namespace cuda{
+namespace cuda {
 template <typename FRAG_T>
 class LCCContext : public grape::VoidContext<FRAG_T> {
  public:
@@ -388,5 +388,5 @@ class LCC : public GPUAppBase<FRAG_T, LCCContext<FRAG_T>>,
 };
 }  // namespace cuda
 }  // namespace grape
-#endif // WITH_CUDA
+#endif  // WITH_CUDA
 #endif

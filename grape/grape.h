@@ -21,6 +21,7 @@ limitations under the License.
 #include "grape/app/context_base.h"
 #include "grape/app/parallel_app_base.h"
 #include "grape/app/vertex_data_context.h"
+#include "grape/app/void_context.h"
 #include "grape/parallel/auto_parallel_message_manager.h"
 #include "grape/parallel/batch_shuffle_message_manager.h"
 #include "grape/parallel/default_message_manager.h"

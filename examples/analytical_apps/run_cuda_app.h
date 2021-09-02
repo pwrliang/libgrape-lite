@@ -19,17 +19,17 @@
 #include <utility>
 #include <vector>
 
-#include "analytical_apps/gpu/bfs/bfs.h"
-#include "analytical_apps/gpu/cdlp/cdlp.h"
-#include "analytical_apps/gpu/lcc/lcc.h"
-#include "analytical_apps/gpu/pagerank/pagerank.h"
-#include "analytical_apps/gpu/pagerank/pagerank_pull.h"
-#include "analytical_apps/gpu/sssp/sssp.h"
-#include "analytical_apps/gpu/wcc/wcc.h"
-#include "analytical_apps/gpu/wcc/wcc_opt.h"
+#include "gpu/bfs/bfs.h"
+#include "gpu/cdlp/cdlp.h"
+#include "gpu/lcc/lcc.h"
+#include "gpu/pagerank/pagerank.h"
+#include "gpu/pagerank/pagerank_pull.h"
+#include "gpu/sssp/sssp.h"
+#include "gpu/wcc/wcc.h"
+#include "gpu/wcc/wcc_opt.h"
 
-#include "analytical_apps/flags.h"
-#include "analytical_apps/timer.h"
+#include "flags.h"
+#include "timer.h"
 #include "grape/worker/comm_spec.h"
 #include "grape/fragment/loader.h"
 #include "grape/cuda/fragment/host_fragment.h"

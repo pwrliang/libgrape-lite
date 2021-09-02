@@ -5,7 +5,7 @@
 #include "grape/grape.h"
 
 namespace grape {
-namespace cuda{
+namespace cuda {
 
 template <typename FRAG_T>
 class BFSContext : public grape::VoidContext<FRAG_T> {
@@ -169,5 +169,5 @@ class BFS : public GPUAppBase<FRAG_T, BFSContext<FRAG_T>>,
 };
 }  // namespace cuda
 }  // namespace grape
-#endif // WITH_CUDA
+#endif  // WITH_CUDA
 #endif  // EXAMPLES_ANALYTICAL_APPS_BFS_BFS_H_

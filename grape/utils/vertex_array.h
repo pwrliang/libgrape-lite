@@ -41,8 +41,6 @@ class Vertex {
   DEV_HOST Vertex(const Vertex& rhs) : value_(rhs.value_) {}
   DEV_HOST Vertex(Vertex&& rhs) : value_(rhs.value_) {}
 
-  ~Vertex() = default;
-
   DEV_HOST_INLINE Vertex& operator=(const Vertex& rhs) {
     value_ = rhs.value_;
     return *this;
@@ -79,6 +77,8 @@ class Vertex {
     value_--;
     return res;
   }
+
+  DEV_HOST_INLINE Vertex operator+(T inc) const { return Vertex(value_ + inc); }
 
   DEV_HOST_INLINE bool operator==(const Vertex& rhs) const {
     return value_ == rhs.value_;

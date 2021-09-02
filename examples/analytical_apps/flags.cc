@@ -46,3 +46,18 @@ DEFINE_int32(app_concurrency, -1, "concurrency of application");
 
 DEFINE_bool(mtx, false, "support the market graph format");
 DEFINE_bool(rm_self_cycle, false, "whether to remove self loop");
+
+DEFINE_string(lb, "cm",
+              "Load balancing policy, these options can be used: auto, "
+              "auto_static, none, cta, cm, cmold, wm, strict");
+DEFINE_double(wl_alloc_factor_in, 0.4,
+              "Preallocate |allocation factor| * |edge num| elements for local "
+              "input worklist");
+DEFINE_double(wl_alloc_factor_out_local, 0.2,
+              "Preallocate |allocation factor| * |edge num| elements for local "
+              "output worklist");
+DEFINE_double(wl_alloc_factor_out_remote, 0.2,
+              "Preallocate |allocation factor| * |edge num| elements for "
+              "remote output worklist");
+
+DEFINE_int32(sssp_prio, 0, "Initial priority of sssp");

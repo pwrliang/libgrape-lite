@@ -1,9 +1,9 @@
 #ifndef EXAMPLES_ANALYTICAL_APPS_GPU_WCC_WCC_OPT_H_
 #define EXAMPLES_ANALYTICAL_APPS_GPU_WCC_WCC_OPT_H_
 #ifdef WITH_CUDA
-#include "app_config.h"
+#include "gpu/app_config.h"
 #include "grape/cuda/fragment/id_parser.h"
-#include "grape/cuda/grape.h"
+#include "grape/grape.h"
 
 namespace grape {
 namespace cuda {
@@ -278,5 +278,5 @@ class WCCOpt : public GPUAppBase<FRAG_T, WCCOptContext<FRAG_T>>,
 };
 }  // namespace cuda
 }  // namespace grape
-#endif // WITH_CUDA
+#endif  // WITH_CUDA
 #endif  // EXAMPLES_ANALYTICAL_APPS_GPU_WCC_WCC_OPT_H_
