@@ -20,7 +20,7 @@ limitations under the License.
 #include <jemalloc/jemalloc.h>
 #endif
 
-#ifdef WITH_CUDA
+#ifdef __CUDACC__
 #include <thrust/host_vector.h>
 #include <thrust/system/cuda/experimental/pinned_allocator.h>
 #endif
