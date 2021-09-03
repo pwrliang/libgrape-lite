@@ -1,10 +1,10 @@
 #ifndef EXAMPLES_ANALYTICAL_APPS_GPU_CDLP_CDLP_H_
 #define EXAMPLES_ANALYTICAL_APPS_GPU_CDLP_CDLP_H_
 
-#ifdef WITH_CUDA
+#ifdef __CUDACC__
 #include <algorithm>
 
-#include "gpu/app_config.h"
+#include "cuda/app_config.h"
 #include "grape/grape.h"
 
 namespace grape {
@@ -315,5 +315,5 @@ class CDLP : public GPUAppBase<FRAG_T, CDLPContext<FRAG_T>>,
 };
 }  // namespace cuda
 }  // namespace grape
-#endif  // WITH_CUDA
+#endif  // __CUDACC__
 #endif  // EXAMPLES_ANALYTICAL_APPS_GPU_CDLP_CDLP_H_

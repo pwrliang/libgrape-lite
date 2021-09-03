@@ -1,7 +1,7 @@
 #ifndef GRAPE_CUDA_VERTEX_MAP_DEVICE_VERTEX_MAP_H_
 #define GRAPE_CUDA_VERTEX_MAP_DEVICE_VERTEX_MAP_H_
 
-#ifdef WITH_CUDA
+#ifdef __CUDACC__
 #include "cuda_hashmap/hash_map.h"
 #include "grape/cuda/fragment/id_parser.h"
 #include "grape/cuda/utils/array_view.h"

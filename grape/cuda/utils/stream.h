@@ -1,6 +1,5 @@
 #ifndef GRAPE_CUDA_UTILS_STREAM_H_
 #define GRAPE_CUDA_UTILS_STREAM_H_
-#ifdef WITH_CUDA
 #include "grape/cuda/utils/cuda_utils.h"
 
 namespace grape {
@@ -57,5 +56,4 @@ class Stream {
 };
 }  // namespace cuda
 }  // namespace grape
-#endif // WITH_CUDA
 #endif  // GRAPE_CUDA_UTILS_STREAM_H_

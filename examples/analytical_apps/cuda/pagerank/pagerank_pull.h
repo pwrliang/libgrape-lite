@@ -1,8 +1,10 @@
 #ifndef EXAMPLES_ANALYTICAL_APPS_GPU_PAGERANK_PAGERANK_PULL_H_
 #define EXAMPLES_ANALYTICAL_APPS_GPU_PAGERANK_PAGERANK_PULL_H_
-#ifdef WITH_CUDA
-#include "gpu/app_config.h"
+#ifdef __CUDACC__
+#include "cuda/app_config.h"
 #include "grape/grape.h"
+#include "grape/cuda/utils/vertex_array.h"
+
 namespace grape {
 namespace cuda {
 template <typename FRAG_T>
@@ -143,7 +145,7 @@ class PagerankPull
         }
       });
 
-      messages.template SyncInnerVertices(frag, ctx.next_rank);
+      messages.template SyncInnerVertices<fragment_t, rank_t>(frag, ctx.next_rank);
     }
 
     ctx.rank.Swap(ctx.next_rank);
@@ -151,5 +153,5 @@ class PagerankPull
 };
 }  // namespace cuda
 }  // namespace grape
-#endif  // WITH_CUDA
+#endif  // __CUDACC__
 #endif  // EXAMPLES_ANALYTICAL_APPS_PAGERANK_PAGERANK_PULL_H_

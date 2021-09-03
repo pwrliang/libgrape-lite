@@ -2,7 +2,6 @@
 #ifndef GRAPE_CUDA_FRAGMENT_ID_PARSER_H_
 #define GRAPE_CUDA_FRAGMENT_ID_PARSER_H_
 
-#ifdef WITH_CUDA
 
 #include "grape/config.h"
 #include "grape/cuda/utils/cuda_utils.h"
@@ -44,6 +43,5 @@ class IdParser {
 };
 }  // namespace grape
 
-#endif
 
 #endif  // GRAPE_CUDA_FRAGMENT_ID_PARSER_H_

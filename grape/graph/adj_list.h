@@ -338,9 +338,9 @@ class ConstAdjList {
  *
  */
 struct DestList {
-  DestList(fid_t* begin_, fid_t* end_) : begin(begin_), end(end_) {}
-  inline bool Empty() { return begin == end; }
-  inline bool NotEmpty() { return !Empty(); }
+  DEV_HOST DestList(fid_t* begin_, fid_t* end_) : begin(begin_), end(end_) {}
+  DEV_HOST_INLINE bool Empty() { return begin == end; }
+  DEV_HOST_INLINE bool NotEmpty() { return !Empty(); }
   fid_t* begin;
   fid_t* end;
 };

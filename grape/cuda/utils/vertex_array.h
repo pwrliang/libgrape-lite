@@ -1,6 +1,5 @@
 #ifndef GRAPE_CUDA_UTILS_DEV_VERTEX_ARRAY_H_
 #define GRAPE_CUDA_UTILS_DEV_VERTEX_ARRAY_H_
-#ifdef WITH_CUDA
 #include <thrust/device_vector.h>
 
 #include <cub/util_type.cuh>
@@ -165,5 +164,4 @@ struct Traits<grape::Vertex<T>>
 
 }  // namespace cub
 
-#endif  // WITH_CUDA
 #endif  // GRAPE_CUDA_UTILS_DEV_VERTEX_ARRAY_H_

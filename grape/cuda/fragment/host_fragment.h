@@ -1,7 +1,6 @@
 #ifndef GRAPE_CUDA_FRAGMENT_HOST_FRAGMENT_H_
 #define GRAPE_CUDA_FRAGMENT_HOST_FRAGMENT_H_
 
-#ifdef WITH_CUDA
 
 #include <algorithm>
 #include <cassert>
@@ -1365,12 +1364,12 @@ class HostFragment {
           auto v = e.get_neighbor();
           auto data = e.get_data();
 
-          edges.push_back(typename coo_t::edge_t(u, v, data));
+          edges.push_back(typename coo_t::edge_t(u.GetValue(), v.GetValue(), data));
         }
       }
 
       coo_frag_ = std::make_shared<coo_t>();
-      coo_frag_->Init(edges);
+      //coo_frag_->Init(edges);
     }
     return coo_frag_;
   }
@@ -1537,5 +1536,4 @@ class HostFragment {
 };
 }  // namespace cuda
 }  // namespace grape
-#endif  // WITH_CUDA
 #endif  // GRAPE_CUDA_FRAGMENT_HOST_FRAGMENT_H_

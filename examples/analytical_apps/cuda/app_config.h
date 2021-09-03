@@ -1,7 +1,7 @@
 
 #ifndef EXAMPLES_ANALYTICAL_APPS_GPU_APP_CONFIG_H_
 #define EXAMPLES_ANALYTICAL_APPS_GPU_APP_CONFIG_H_
-#ifdef WITH_CUDA
+#ifdef __CUDACC__
 #include "grape/parallel/parallel_engine.h"
 namespace grape {
 namespace cuda {
@@ -13,5 +13,5 @@ struct AppConfig {
 };
 }  // namespace cuda
 }  // namespace grape
-#endif  // WITH_CUDA
+#endif  // __CUDACC__
 #endif  // EXAMPLES_ANALYTICAL_APPS_GPU_APP_CONFIG_H_

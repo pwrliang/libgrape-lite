@@ -1,7 +1,7 @@
 #ifndef EXAMPLES_ANALYTICAL_APPS_GPU_PAGERANK_PAGERANK_H_
 #define EXAMPLES_ANALYTICAL_APPS_GPU_PAGERANK_PAGERANK_H_
-#ifdef WITH_CUDA
-#include "gpu/app_config.h"
+#ifdef __CUDACC__
+#include "cuda/app_config.h"
 #include "grape/grape.h"
 namespace grape {
 namespace cuda {
@@ -189,5 +189,5 @@ class Pagerank : public GPUAppBase<FRAG_T, PagerankContext<FRAG_T>>,
 };
 }  // namespace cuda
 }  // namespace grape
-#endif  // WITH_CUDA
+#endif  // __CUDACC__
 #endif

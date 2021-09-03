@@ -1,7 +1,7 @@
 #ifndef EXAMPLES_ANALYTICAL_APPS_GPU_BFS_BFS_H_
 #define EXAMPLES_ANALYTICAL_APPS_GPU_BFS_BFS_H_
-#ifdef WITH_CUDA
-#include "gpu/app_config.h"
+#ifdef __CUDACC__
+#include "cuda/app_config.h"
 #include "grape/grape.h"
 
 namespace grape {
@@ -169,5 +169,5 @@ class BFS : public GPUAppBase<FRAG_T, BFSContext<FRAG_T>>,
 };
 }  // namespace cuda
 }  // namespace grape
-#endif  // WITH_CUDA
+#endif  // __CUDACC__
 #endif  // EXAMPLES_ANALYTICAL_APPS_BFS_BFS_H_

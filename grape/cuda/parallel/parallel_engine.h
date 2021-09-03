@@ -98,6 +98,8 @@ struct VertexMetadata {
   Vertex<VID_T> vertex;
   METADATA_T metadata;
 
+  DEV_HOST VertexMetadata() {}
+
   DEV_INLINE void set_vertex(const Vertex<VID_T>& v) { vertex = v; }
 
   DEV_INLINE void set_metadata(const METADATA_T& data) { metadata = data; }
@@ -110,11 +112,12 @@ struct VertexMetadata<VID_T, grape::EmptyType> {
     grape::EmptyType metadata;
   };
 
+  DEV_HOST VertexMetadata<VID_T, grape::EmptyType>() {}
+
   DEV_INLINE void set_vertex(const Vertex<VID_T>& v) { vertex = v; }
 
   DEV_INLINE void set_metadata(const grape::EmptyType&) {}
 
-  VertexMetadata<VID_T, grape::EmptyType>() = default;
 
   __device__ VertexMetadata<VID_T, grape::EmptyType>(
       const VertexMetadata<VID_T, grape::EmptyType>& rhs) {

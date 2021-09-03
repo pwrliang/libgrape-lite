@@ -1,7 +1,7 @@
 #ifndef EXAMPLES_ANALYTICAL_APPS_GPU_SSSP_SSSP_H_
 #define EXAMPLES_ANALYTICAL_APPS_GPU_SSSP_SSSP_H_
-#ifdef WITH_CUDA
-#include "gpu/app_config.h"
+#ifdef __CUDACC__
+#include "cuda/app_config.h"
 #include "grape/grape.h"
 
 namespace grape {
@@ -266,5 +266,5 @@ class SSSP : public GPUAppBase<FRAG_T, SSSPContext<FRAG_T>>,
 };
 }  // namespace cuda
 }  // namespace grape
-#endif  // WITH_CUDA
+#endif  // __CUDACC__
 #endif  // EXAMPLES_ANALYTICAL_APPS_GPU_SSSP_SSSP_H_

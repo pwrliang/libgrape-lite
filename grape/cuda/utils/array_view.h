@@ -1,6 +1,5 @@
 #ifndef GRAPE_CUDA_UTILS_ARRAY_VIEW_H_
 #define GRAPE_CUDA_UTILS_ARRAY_VIEW_H_
-#ifdef WITH_CUDA
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 #include <thrust/swap.h>
@@ -57,5 +56,4 @@ class ArrayView {
 };
 }  // namespace cuda
 }  // namespace grape
-#endif
 #endif  // GRAPE_CUDA_UTILS_ARRAY_VIEW_H_

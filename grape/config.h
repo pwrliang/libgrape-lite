@@ -20,7 +20,7 @@ limitations under the License.
 #include <jemalloc/jemalloc.h>
 #endif
 
-#ifdef WITH_CUDA
+#ifdef __CUDACC__
 #include <thrust/host_vector.h>
 #include <thrust/system/cuda/experimental/pinned_allocator.h>
 #endif
@@ -58,7 +58,7 @@ using Allocator = DefaultAllocator<T>;
 #define DEV_INLINE
 #endif
 
-#ifdef WITH_CUDA
+#ifdef __CUDACC__
 #define MAX_BLOCK_SIZE 256
 #define MAX_GRID_SIZE 768
 #define TID_1D (threadIdx.x + blockIdx.x * blockDim.x)

@@ -1,7 +1,7 @@
 #ifndef EXAMPLES_ANALYTICAL_APPS_GPU_WCC_WCC_OPT_H_
 #define EXAMPLES_ANALYTICAL_APPS_GPU_WCC_WCC_OPT_H_
-#ifdef WITH_CUDA
-#include "gpu/app_config.h"
+#ifdef __CUDACC__
+#include "cuda/app_config.h"
 #include "grape/cuda/fragment/id_parser.h"
 #include "grape/grape.h"
 
@@ -144,8 +144,8 @@ class WCCOpt : public GPUAppBase<FRAG_T, WCCOptContext<FRAG_T>>,
 
         for (size_t i = begin_eid + tid; i < end_eid; i += nthreads) {
           auto& e = d_coo[i];
-          auto u = e.src();
-          auto v = e.dst();
+          auto u = vertex_t(e.src());
+          auto v = vertex_t(e.dst());
 
           // is not a self-cycle
           if (u != v) {
@@ -278,5 +278,5 @@ class WCCOpt : public GPUAppBase<FRAG_T, WCCOptContext<FRAG_T>>,
 };
 }  // namespace cuda
 }  // namespace grape
-#endif  // WITH_CUDA
+#endif  // __CUDACC__
 #endif  // EXAMPLES_ANALYTICAL_APPS_GPU_WCC_WCC_OPT_H_

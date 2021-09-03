@@ -31,7 +31,7 @@ class BatchShuffleAppBase {
   static constexpr grape::LoadStrategy load_strategy =
       grape::LoadStrategy::kOnlyOut;
 
-  using message_manager_t = BatchShuffleMessageManager;
+  using message_manager_t = grape::cuda::BatchShuffleMessageManager;
 
   BatchShuffleAppBase() = default;
   virtual ~BatchShuffleAppBase() = default;

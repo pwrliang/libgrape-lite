@@ -88,7 +88,13 @@ class Vertex {
     return value_ != rhs.value_;
   }
 
-  void Swap(Vertex& rhs) { std::swap(value_, rhs.value_); }
+  DEV_HOST_INLINE void Swap(Vertex& rhs) { 
+#ifdef __CUDACC__
+    thrust::swap(value_, rhs.value_);
+#else
+    std::swap(value_, rhs.value_); 
+#endif
+  }
 
   DEV_HOST_INLINE bool operator<(const Vertex& rhs) const {
     return value_ < rhs.value_;
@@ -145,9 +151,13 @@ class VertexRange {
   DEV_HOST_INLINE size_t size() const { return size_; }
 
   DEV_HOST void Swap(VertexRange& rhs) {
-    begin_.Swap(rhs.begin_);
+    begin_.Swap(rhs.begin_); 
     end_.Swap(rhs.end_);
+#ifdef __CUDACC__
+    thrust::swap(size_, rhs.size_);
+#else
     std::swap(size_, rhs.size_);
+#endif
   }
 
   DEV_HOST void SetRange(T begin, T end) {

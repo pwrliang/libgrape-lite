@@ -29,7 +29,7 @@ endif ()
 include_directories(thirdparty)
 if (WITH_CUDA)
     message("-- Build with CUDA support")
-    add_definitions(-DWITH_CUDA)
+#   add_definitions(-DWITH_CUDA)
 endif ()
 # ------------------------------------------------------------------------------
 # setting default cmake type to Release
@@ -260,7 +260,7 @@ else ()
         cuda_add_executable(run_cuda_app examples/analytical_apps/flags.cc examples/analytical_apps/run_cuda_app.cu)
         target_include_directories(run_cuda_app PRIVATE examples/analytical_apps thirdparty/cub thirdparty/thrust thirdparty/moderngpu/src)
         target_link_libraries(run_cuda_app grape-lite ${MPI_CXX_LIBRARIES}
-                ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${CMAKE_DL_LIBS} ${CUDA_LIBS})
+          ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${CMAKE_DL_LIBS} ${CUDA_LIBS} ${NCCL_LIBRARIES})
     endif ()
 endif ()
 

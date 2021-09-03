@@ -1,7 +1,6 @@
 #ifndef GRAPE_CUDA_FRAGMENT_COO_FRAGMENT_H_
 #define GRAPE_CUDA_FRAGMENT_COO_FRAGMENT_H_
 
-#ifdef WITH_CUDA
 
 #include <cooperative_groups.h>
 
@@ -76,5 +75,4 @@ class COOFragment {
 };
 }  // namespace cuda
 }  // namespace grape
-#endif  // WITH_CUDA
 #endif  // GRAPE_CUDA_FRAGMENT_COO_FRAGMENT_H_

@@ -1,6 +1,5 @@
 #ifndef GRAPE_CUDA_UTILS_DEV_UTILS_H_
 #define GRAPE_CUDA_UTILS_DEV_UTILS_H_
-#ifdef WITH_CUDA
 #include "grape/cuda/utils/array_view.h"
 #include "grape/cuda/utils/launcher.h"
 
@@ -89,5 +88,4 @@ DEV_INLINE int BinarySearch(const T* arr, const T& key) {
 }  // namespace cuda
 }  // namespace grape
 
-#endif  // WITH_CUDA
 #endif  // GRAPE_CUDA_UTILS_DEV_UTILS_H_

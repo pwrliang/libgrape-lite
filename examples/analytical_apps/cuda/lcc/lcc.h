@@ -1,9 +1,9 @@
 #ifndef EXAMPLES_ANALYTICAL_APPS_GPU_LCC_LCC_H_
 #define EXAMPLES_ANALYTICAL_APPS_GPU_LCC_LCC_H_
-#ifdef WITH_CUDA
+#ifdef __CUDACC__
 #include <iomanip>
 
-#include "gpu/app_config.h"
+#include "cuda/app_config.h"
 #include "grape/grape.h"
 
 namespace grape {
@@ -315,7 +315,7 @@ class LCC : public GPUAppBase<FRAG_T, LCCContext<FRAG_T>>,
                   auto max_degree = max(degree_u, degree_v);
                   auto total_degree = degree_u + degree_v;
 
-                  if (min_degree * ilog2(max_degree) * 10 < total_degree) {
+                  if (min_degree * ilogb((double)max_degree) * 10 < total_degree) {
                     auto min_edge_begin =
                         degree_u < degree_v ? edge_begin_u : edge_begin_v;
                     auto min_edge_end = min_edge_begin + min_degree;
@@ -327,7 +327,7 @@ class LCC : public GPUAppBase<FRAG_T, LCCContext<FRAG_T>>,
                     for (; min_edge_begin < min_edge_end; min_edge_begin++) {
                       auto dst_gid_from_small = d_col_indices[min_edge_begin];
 
-                      if (BinarySearch(dst_gids, dst_gid_from_small)) {
+                      if (dev::BinarySearch(dst_gids, dst_gid_from_small)) {
                         // convert from dst_gid_from_small to lid without
                         // calling Gid2Vertex
                         vertex_t comm_vertex(d_dst_lid[min_edge_begin]);
@@ -388,5 +388,5 @@ class LCC : public GPUAppBase<FRAG_T, LCCContext<FRAG_T>>,
 };
 }  // namespace cuda
 }  // namespace grape
-#endif  // WITH_CUDA
+#endif  // __CUDACC__
 #endif

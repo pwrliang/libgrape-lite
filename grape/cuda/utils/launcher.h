@@ -1,6 +1,5 @@
 #ifndef GRAPE_CUDA_UTILS_LAUNCHER_H_
 #define GRAPE_CUDA_UTILS_LAUNCHER_H_
-#ifdef WITH_CUDA
 #include "grape/cuda/utils/stream.h"
 
 namespace grape {
@@ -33,5 +32,4 @@ void LaunchKernel(const Stream& stream, size_t size, F f, Args&&... args) {
 }
 }  // namespace cuda
 }  // namespace grape
-#endif  // WITH_CUDA
 #endif  // GRAPE_CUDA_UTILS_LAUNCHER_H_

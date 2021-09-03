@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifdef WITH_CUDA
 #include <gflags/gflags.h>
 #include <gflags/gflags_declare.h>
 #include <glog/logging.h>
@@ -52,4 +51,3 @@ int main(int argc, char* argv[]) {
 
   google::ShutdownGoogleLogging();
 }
-#endif  // WITH_CUDA

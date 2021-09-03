@@ -1,7 +1,6 @@
 
 #ifndef EXAMPLES_ANALYTICAL_APPS_RUN_CUDA_APP_H_
 #define EXAMPLES_ANALYTICAL_APPS_RUN_CUDA_APP_H_
-#ifdef WITH_CUDA
 
 #include <gflags/gflags.h>
 #include <gflags/gflags_declare.h>
@@ -19,14 +18,14 @@
 #include <utility>
 #include <vector>
 
-#include "gpu/bfs/bfs.h"
-#include "gpu/cdlp/cdlp.h"
-#include "gpu/lcc/lcc.h"
-#include "gpu/pagerank/pagerank.h"
-#include "gpu/pagerank/pagerank_pull.h"
-#include "gpu/sssp/sssp.h"
-#include "gpu/wcc/wcc.h"
-#include "gpu/wcc/wcc_opt.h"
+#include "cuda/bfs/bfs.h"
+#include "cuda/cdlp/cdlp.h"
+#include "cuda/lcc/lcc.h"
+#include "cuda/pagerank/pagerank.h"
+#include "cuda/pagerank/pagerank_pull.h"
+#include "cuda/sssp/sssp.h"
+#include "cuda/wcc/wcc.h"
+#include "cuda/wcc/wcc_opt.h"
 
 #include "flags.h"
 #include "timer.h"
@@ -200,5 +199,4 @@ void Run() {
 }
 }  // namespace cuda
 }  // namespace grape
-#endif //  WITH_CUDA
 #endif  // EXAMPLES_ANALYTICAL_APPS_RUN_CUDA_APP_H_

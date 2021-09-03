@@ -1,7 +1,6 @@
 #ifndef GRAPE_CUDA_UTILS_SHARED_VALUE_H_
 #define GRAPE_CUDA_UTILS_SHARED_VALUE_H_
 
-#ifdef WITH_CUDA
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 #include <thrust/system/cuda/experimental/pinned_allocator.h>
@@ -73,5 +72,4 @@ class SharedValue {
 }  // namespace cuda
 }  // namespace grape
 
-#endif  // WITH_GPU
 #endif  // GRAPE_CUDA_UTILS_SHARED_VALUE_H_

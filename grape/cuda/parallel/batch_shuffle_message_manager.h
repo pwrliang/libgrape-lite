@@ -21,6 +21,7 @@
 #include "grape/cuda/serialization/in_archive.h"
 #include "grape/cuda/serialization/out_archive.h"
 #include "grape/cuda/utils/array_view.h"
+#include "grape/cuda/utils/vertex_array.h"
 #include "grape/cuda/utils/event.h"
 #include "grape/cuda/utils/stream.h"
 
