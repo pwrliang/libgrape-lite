@@ -249,7 +249,7 @@ class WCCOpt : public GPUAppBase<FRAG_T, WCCOptContext<FRAG_T>>,
           p_v = d_parents[low];
         }
       }
-    };
+    };  // NOLINT
 
     // HookHighToLowAtomic
     messages.template ParallelProcess<thrust::pair<offset_t, offset_t>>(

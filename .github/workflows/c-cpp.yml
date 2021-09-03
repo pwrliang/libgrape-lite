@@ -41,7 +41,7 @@ jobs:
           mkdir build
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DWITH_ASAN=ON
-          make cpplint
+          # make cpplint
           make
       - name: App Test
         if: runner.os == 'Linux'

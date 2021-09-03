@@ -1017,7 +1017,7 @@ class ParallelEngine {
     auto lb_wrapper = [=] __device__() {
       LBCM<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
           dev_frag, ws, row_offset_view, assign_op, op);
-    };
+    };  // NOLINT
 
     KernelSizing(grid_size, block_size, ws.size());
     KernelWrapper<<<grid_size, block_size, calc_shmem_size(block_size),
@@ -1034,7 +1034,7 @@ class ParallelEngine {
     auto lb_wrapper = [=] __device__() {
       LBCTA<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(dev_frag, ws,
                                                            assign_op, op);
-    };
+    };  // NOLINT
 
     KernelSizing(grid_size, block_size, ws.size());
     KernelWrapper<<<grid_size, block_size, 0, stream.cuda_stream()>>>(
@@ -1059,7 +1059,7 @@ class ParallelEngine {
     auto lb_wrapper = [=] __device__() {
       LBCMOld<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(dev_frag, ws,
                                                              assign_op, op);
-    };
+    };  // NOLINT
 
     KernelSizing(grid_size, block_size, ws.size());
     KernelWrapper<<<grid_size, block_size, calc_shmem_size(block_size),
@@ -1088,7 +1088,7 @@ class ParallelEngine {
     auto lb_wrapper = [=] __device__() {
       LBWARP<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(dev_frag, ws,
                                                             assign_op, op);
-    };
+    };  // NOLINT
 
     KernelSizing(grid_size, block_size, ws.size());
     KernelWrapper<<<grid_size, block_size, calc_shmem_size(block_size),
@@ -1116,7 +1116,7 @@ class ParallelEngine {
                                      size_t partition_size) {
       LBSTRICT<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
           dev_frag, sidx, row_offset, partition_size, ws, assign_op, op);
-    };
+    };  // NOLINT
     auto calc_shmem_size = [] DEV_HOST(int block_size) -> int {
       using nbr_t = typename FRAG_T::nbr_t;
       using vid_t = typename FRAG_T::vid_t;
@@ -1172,7 +1172,7 @@ class ParallelEngine {
     auto lb_wrapper = [=] __device__() {
       LBNONE<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(dev_frag, ws,
                                                             assign_op, op);
-    };
+    };  // NOLINT
 
     KernelSizing(grid_size, block_size, ws.size());
     KernelWrapper<<<grid_size, block_size, 0, stream.cuda_stream()>>>(
