@@ -15,7 +15,7 @@ option(BUILD_SHARED_LIBS "Whether to build libgrape-lite as shared library" ON)
 option(PROFILING "Whether to enable profiling" OFF)
 option(WITH_ASAN "Build with Address Sanitizer" OFF)
 option(BUILD_LIBGRAPELITE_DOCS "Build libgrape-lite documentation" ON)
-option(WITH_CUDA "Whether to enable cuda support" ON)
+option(WITH_CUDA "Whether to enable cuda support" OFF)
 
 if (USE_HUGEPAGES AND LINUX)
     add_definitions(-DUSE_HUGEPAGES)
