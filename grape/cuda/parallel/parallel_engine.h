@@ -1,3 +1,17 @@
+/** Copyright 2020 Alibaba Group Holding Limited.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 #ifndef GRAPE_CUDA_PARALLEL_PARALLEL_ENGINE_H_
 #define GRAPE_CUDA_PARALLEL_PARALLEL_ENGINE_H_
@@ -16,7 +30,7 @@
 #include "grape/cuda/utils/sorted_search.h"
 #include "grape/cuda/utils/work_source.h"
 
-// TODO: we may split this to multiple headers
+// TODO(liang): we may split this to multiple headers
 namespace grape {
 namespace cuda {
 
@@ -241,7 +255,7 @@ struct np_local {
   TMetaData meta_data;
 };
 
-// TODO: revisit CTAWorkScheduler and #define NO_CTA_WARP_INTRINSICS
+// TODO(liang): revisit CTAWorkScheduler and #define NO_CTA_WARP_INTRINSICS
 template <typename VID_T, typename EDATA_T, typename TMetaData>
 struct CTAWorkScheduler {
   template <typename TWork>
@@ -451,13 +465,13 @@ DEV_INLINE void LBCMOld(const FRAG_T& dev_frag,
   using metadata_t = typename std::result_of<ASSIGN_OP&(vertex_t&)>::type;
 
   extern __shared__ char shared_lb_cm_old[];
-  auto* vertices =
-      (VertexMetadata<vid_t,
-                      metadata_t>*) &shared_lb_cm_old[0];  // len =
-                                                           // block_size
-  auto** nbr_begin =
-      (const nbr_t**) &vertices[blockDim.x];           // len == block size
-  auto* row_offset = (vid_t*) &nbr_begin[blockDim.x];  // len = block size
+  auto* vertices = reinterpret_cast<VertexMetadata<vid_t,
+                                                   metadata_t>*>(
+      &shared_lb_cm_old[0]);  // len =  block_size
+  auto** nbr_begin = reinterpret_cast<const nbr_t**>(
+      &vertices[blockDim.x]);  // len == block size
+  auto* row_offset =
+      reinterpret_cast<vid_t*>(&nbr_begin[blockDim.x]);  // len = block size
   typedef cub::BlockScan<vid_t, MAX_BLOCK_SIZE> BlockScan;
   __shared__ typename BlockScan::TempStorage temp_storage;
 
@@ -519,9 +533,10 @@ DEV_INLINE void LBCM(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
   using metadata_t = typename std::result_of<ASSIGN_OP&(vertex_t&)>::type;
 
   extern __shared__ char shared_lb_cm[];
-  auto* vertices = (VertexMetadata<vid_t, metadata_t>*) &shared_lb_cm[0];
-  auto** nbr_begin = (const nbr_t**) &vertices[blockDim.x];
-  auto* prefix_sum = (vid_t*) &nbr_begin[blockDim.x];
+  auto* vertices =
+      reinterpret_cast<VertexMetadata<vid_t, metadata_t>*>(&shared_lb_cm[0]);
+  auto** nbr_begin = reinterpret_cast<const nbr_t**>(&vertices[blockDim.x]);
+  auto* prefix_sum = reinterpret_cast<vid_t*>(&nbr_begin[blockDim.x]);
   size_t size = work_source.size();
 
   for (size_t block_input_start = blockIdx.x * blockDim.x;
@@ -574,18 +589,18 @@ DEV_INLINE void LBWARP(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
   const int warp_size = 32;
 
   extern __shared__ char shared_lb_warp[];
-  auto* vertices =
-      (VertexMetadata<vid_t,
-                      metadata_t>*) &shared_lb_warp[0];  // len =
-                                                         // block_size
-  auto** nbr_begin =
-      (const nbr_t**) &vertices[blockDim.x];  // len == block size
-  auto* row_offset =
-      (vid_t*) &nbr_begin[blockDim.x];  // len = warp_num * warp_size
+  auto* vertices = reinterpret_cast<VertexMetadata<vid_t,
+                                                   metadata_t>*>(
+      &shared_lb_warp[0]);  // len =
+                            // block_size
+  auto** nbr_begin = reinterpret_cast<const nbr_t**>(
+      &vertices[blockDim.x]);  // len == block size
+  auto* row_offset = reinterpret_cast<vid_t*>(
+      &nbr_begin[blockDim.x]);  // len = warp_num * warp_size
   typedef cub::WarpScan<vid_t, warp_size> WarpScan;
 
-  __shared__
-      typename WarpScan::TempStorage temp_storage[MAX_BLOCK_SIZE / warp_size];
+  __shared__ typename WarpScan::TempStorage
+      temp_storage[MAX_BLOCK_SIZE / warp_size];  // NOLINT(runtime/int)
   auto tid = TID_1D;
   auto warp_id = threadIdx.x / warp_size;
   auto local_tid = threadIdx.x % warp_size;
@@ -685,9 +700,10 @@ DEV_INLINE void LBSTRICT(const FRAG_T& dev_frag, const ArrayView<size_t>& sidx,
   using vertex_metadata_t = VertexMetadata<vid_t, metadata_t>;
 
   extern __shared__ void* shared_lb_strict[];
-  auto* vertices = (vertex_metadata_t*) &shared_lb_strict;
-  const nbr_t** nbr_begin = (const nbr_t**) &vertices[blockDim.x];
-  size_t* prefix_sum = (size_t*) &nbr_begin[blockDim.x];
+  auto* vertices = reinterpret_cast<vertex_metadata_t*>(&shared_lb_strict);
+  const nbr_t** nbr_begin =
+      reinterpret_cast<const nbr_t**>(&vertices[blockDim.x]);
+  size_t* prefix_sum = reinterpret_cast<size_t*>(&nbr_begin[blockDim.x]);
   size_t size = work_source.size();
   size_t total_edges = row_offset[size - 1];
   size_t block_output_start = blockIdx.x * outputs_per_block;

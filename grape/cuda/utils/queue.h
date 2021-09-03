@@ -1,3 +1,18 @@
+/** Copyright 2020 Alibaba Group Holding Limited.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 #ifndef GRAPE_CUDA_UTILS_QUEUE_H_
 #define GRAPE_CUDA_UTILS_QUEUE_H_
 #include <cooperative_groups.h>
@@ -70,7 +85,8 @@ class Queue<T, uint32_t> {
 
 template <typename T>
 class Queue<T, uint64_t> {
-  static_assert(sizeof(unsigned long long int) == sizeof(uint64_t));
+  static_assert(sizeof(unsigned long long int) ==  // NOLINT(runtime/int)
+                sizeof(uint64_t));
 
  public:
   Queue() = default;
@@ -79,7 +95,9 @@ class Queue<T, uint64_t> {
       : data_(data), last_pos_(last_pos) {}
 
   DEV_INLINE void Append(const T& item) {
-    auto allocation = atomicAdd((unsigned long long int*) last_pos_, 1);
+    auto allocation =
+        atomicAdd((unsigned long long int*) last_pos_,  // NOLINT(runtime/int)
+                  1);
     assert(allocation < data_.size());
     data_[allocation] = item;
   }
@@ -89,7 +107,9 @@ class Queue<T, uint64_t> {
     uint64_t warp_res;
 
     if (g.thread_rank() == 0) {
-      warp_res = atomicAdd((unsigned long long int*) last_pos_, g.size());
+      warp_res =
+          atomicAdd((unsigned long long int*) last_pos_,  // NOLINT(runtime/int)
+                    g.size());
     }
     auto begin = g.shfl(warp_res, 0) + g.thread_rank();
     assert(begin < data_.size());

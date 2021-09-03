@@ -88,11 +88,11 @@ class Vertex {
     return value_ != rhs.value_;
   }
 
-  DEV_HOST_INLINE void Swap(Vertex& rhs) { 
+  DEV_HOST_INLINE void Swap(Vertex& rhs) {
 #ifdef __CUDACC__
     thrust::swap(value_, rhs.value_);
 #else
-    std::swap(value_, rhs.value_); 
+    std::swap(value_, rhs.value_);
 #endif
   }
 
@@ -151,7 +151,7 @@ class VertexRange {
   DEV_HOST_INLINE size_t size() const { return size_; }
 
   DEV_HOST void Swap(VertexRange& rhs) {
-    begin_.Swap(rhs.begin_); 
+    begin_.Swap(rhs.begin_);
     end_.Swap(rhs.end_);
 #ifdef __CUDACC__
     thrust::swap(size_, rhs.size_);

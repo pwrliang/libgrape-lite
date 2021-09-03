@@ -1,3 +1,17 @@
+/** Copyright 2020 Alibaba Group Holding Limited.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 #ifndef EXAMPLES_ANALYTICAL_APPS_RUN_CUDA_APP_H_
 #define EXAMPLES_ANALYTICAL_APPS_RUN_CUDA_APP_H_
@@ -28,12 +42,12 @@
 #include "cuda/wcc/wcc_opt.h"
 
 #include "flags.h"
-#include "timer.h"
-#include "grape/worker/comm_spec.h"
-#include "grape/fragment/loader.h"
 #include "grape/cuda/fragment/host_fragment.h"
 #include "grape/cuda/worker/gpu_batch_shuffle_worker.h"
 #include "grape/cuda/worker/gpu_worker.h"
+#include "grape/fragment/loader.h"
+#include "grape/worker/comm_spec.h"
+#include "timer.h"
 
 namespace grape {
 
@@ -60,8 +74,8 @@ template <typename FRAG_T, typename APP_T, typename... Args>
 void CreateAndQuery(const grape::CommSpec& comm_spec, const std::string& efile,
                     const std::string& vfile, const std::string& out_prefix,
                     Args... args) {
-  //using fragment_t = FRAG_T;
-  //using oid_t = typename FRAG_T::oid_t;
+  // using fragment_t = FRAG_T;
+  // using oid_t = typename FRAG_T::oid_t;
   timer_next("load graph");
   LoadGraphSpec graph_spec = DefaultLoadGraphSpec();
 
@@ -95,7 +109,7 @@ void CreateAndQuery(const grape::CommSpec& comm_spec, const std::string& efile,
 
   auto app = std::make_shared<APP_T>();
   timer_next("load application");
-  auto worker = APP_T::CreateWorker(app, fragment); // FIXME
+  auto worker = APP_T::CreateWorker(app, fragment);  // FIXME
   worker->Init(comm_spec, std::forward<Args>(args)...);
   MPI_Barrier(comm_spec.comm());
 
@@ -115,7 +129,6 @@ void CreateAndQuery(const grape::CommSpec& comm_spec, const std::string& efile,
   worker->Finalize();
   timer_end();
   VLOG(1) << "Worker-" << comm_spec.worker_id() << " finished: " << output_path;
-
 }
 
 template <typename OID_T, typename VID_T, typename VDATA_T, typename EDATA_T>
@@ -140,17 +153,17 @@ void Run() {
 
   if (application == "bfs") {
     using GraphType = grape::cuda::HostFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-                                   grape::LoadStrategy::kOnlyOut>;
+                                                grape::LoadStrategy::kOnlyOut>;
     using AppType = BFS<GraphType>;
     CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
                                        app_config, FLAGS_bfs_source);
   } else if (application == "sssp") {
 #ifdef FLOAT_WEIGHT
     using GraphType = grape::cuda::HostFragment<OID_T, VID_T, VDATA_T, float,
-                                   grape::LoadStrategy::kOnlyOut>;
+                                                grape::LoadStrategy::kOnlyOut>;
 #else
     using GraphType = grape::cuda::HostFragment<OID_T, VID_T, VDATA_T, uint32_t,
-                                   grape::LoadStrategy::kOnlyOut>;
+                                                grape::LoadStrategy::kOnlyOut>;
 #endif
     using AppType = SSSP<GraphType>;
     CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
@@ -158,44 +171,44 @@ void Run() {
                                        FLAGS_sssp_prio);
   } else if (application == "wcc") {
     using GraphType = grape::cuda::HostFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-                                   grape::LoadStrategy::kOnlyOut>;
+                                                grape::LoadStrategy::kOnlyOut>;
     using AppType = WCC<GraphType>;
     CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
                                        app_config);
   } else if (application == "wcc_opt") {
     using GraphType = grape::cuda::HostFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-                                   grape::LoadStrategy::kOnlyOut>;
+                                                grape::LoadStrategy::kOnlyOut>;
     using AppType = WCCOpt<GraphType>;
     CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
                                        app_config);
   } else if (application == "pagerank") {
     using GraphType = grape::cuda::HostFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-                                   grape::LoadStrategy::kOnlyOut>;
+                                                grape::LoadStrategy::kOnlyOut>;
     using AppType = Pagerank<GraphType>;
     CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
                                        app_config, FLAGS_pr_d, FLAGS_pr_mr);
   } else if (application == "pagerank_pull") {
-    using GraphType = grape::cuda::HostFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-                                   grape::LoadStrategy::kBothOutIn>;
+    using GraphType =
+        grape::cuda::HostFragment<OID_T, VID_T, VDATA_T, EDATA_T,
+                                  grape::LoadStrategy::kBothOutIn>;
     using AppType = PagerankPull<GraphType>;
     CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
                                        app_config, FLAGS_pr_d, FLAGS_pr_mr);
   } else if (application == "lcc") {
     using GraphType = grape::cuda::HostFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-                                   grape::LoadStrategy::kOnlyOut>;
+                                                grape::LoadStrategy::kOnlyOut>;
     using AppType = LCC<GraphType>;
     CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
                                        app_config);
   } else if (application == "cdlp") {
     using GraphType = grape::cuda::HostFragment<OID_T, VID_T, VDATA_T, EDATA_T,
-                                   grape::LoadStrategy::kOnlyOut>;
+                                                grape::LoadStrategy::kOnlyOut>;
     using AppType = CDLP<GraphType>;
     CreateAndQuery<GraphType, AppType>(comm_spec, efile, vfile, out_prefix,
                                        app_config, FLAGS_cdlp_mr);
   } else {
     LOG(FATAL) << "Invalid app name: " << application;
   }
-
 }
 }  // namespace cuda
 }  // namespace grape

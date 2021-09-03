@@ -1,3 +1,18 @@
+/** Copyright 2020 Alibaba Group Holding Limited.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 #ifndef GRAPE_CUDA_UTILS_BITSET_H_
 #define GRAPE_CUDA_UTILS_BITSET_H_
 #include <cooperative_groups.h>
@@ -41,9 +56,12 @@ class Bitset<uint32_t> {
         return false;
       }
       new_val = old_val | ((uint64_t) 1l << bit_offset(pos));
-    } while (old_val != atomicCAS(reinterpret_cast<unsigned long long int*>(
-                                      data_.data() + word_offset(pos)),
-                                  old_val, new_val));
+    } while (
+        old_val !=
+        atomicCAS(
+            reinterpret_cast<unsigned long long int*>(  // NOLINT(runtime/int)
+                data_.data() + word_offset(pos)),
+            old_val, new_val));
     if ((old_val & (1l << bit_offset(pos))) == 0) {
       auto g = cooperative_groups::coalesced_threads();
 
@@ -97,7 +115,8 @@ class Bitset<uint32_t> {
 template <>
 class Bitset<uint64_t> {
  public:
-  static_assert(sizeof(uint64_t) == sizeof(unsigned long long int));
+  static_assert(sizeof(uint64_t) ==
+                sizeof(unsigned long long int));  // NOLINT(runtime/int)
 
   __host__ __device__ Bitset(ArrayView<uint64_t> data, uint64_t size,
                              uint64_t* positive_count)
@@ -109,7 +128,8 @@ class Bitset<uint64_t> {
     if (data_[word_offset(pos)] & bit) {
       return false;
     }
-    atomicAdd((unsigned long long int*) positive_count_, 1);
+    atomicAdd((unsigned long long int*) positive_count_,  // NOLINT(runtime/int)
+              1);
     data_[word_offset(pos)] |= bit;
     return true;
   }
@@ -123,14 +143,19 @@ class Bitset<uint64_t> {
         return false;
       }
       new_val = old_val | ((uint64_t) 1l << bit_offset(pos));
-    } while (old_val != atomicCAS(reinterpret_cast<unsigned long long int*>(
-                                      data_.data() + word_offset(pos)),
-                                  old_val, new_val));
+    } while (
+        old_val !=
+        atomicCAS(
+            reinterpret_cast<unsigned long long int*>(  // NOLINT(runtime/int)
+                data_.data() + word_offset(pos)),
+            old_val, new_val));
     if ((old_val & (1l << bit_offset(pos))) == 0) {
       auto g = cooperative_groups::coalesced_threads();
 
       if (g.thread_rank() == 0) {
-        atomicAdd((unsigned long long int*) positive_count_, g.size());
+        atomicAdd(
+            (unsigned long long int*) positive_count_,  // NOLINT(runtime/int)
+            g.size());
       }
       return true;
     }
@@ -258,4 +283,4 @@ class Bitset {
 }  // namespace cuda
 }  // namespace grape
 
-#endif  // GRAPE_GPU_UTILS_BITSET_H_
+#endif  // GRAPE_CUDA_UTILS_BITSET_H_

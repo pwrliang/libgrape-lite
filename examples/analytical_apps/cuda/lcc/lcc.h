@@ -1,5 +1,20 @@
-#ifndef EXAMPLES_ANALYTICAL_APPS_GPU_LCC_LCC_H_
-#define EXAMPLES_ANALYTICAL_APPS_GPU_LCC_LCC_H_
+/** Copyright 2020 Alibaba Group Holding Limited.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#ifndef EXAMPLES_ANALYTICAL_APPS_CUDA_LCC_LCC_H_
+#define EXAMPLES_ANALYTICAL_APPS_CUDA_LCC_LCC_H_
 #ifdef __CUDACC__
 #include <iomanip>
 
@@ -37,8 +52,14 @@ class LCCContext : public grape::VoidContext<FRAG_T> {
 
     row_offset.resize(vertices.size() + 1, 0);
 
-    // TODO: Infer message size
-    messages.InitBuffer(500 * 1024 * 1024, 500 * 1024 * 1024);
+    size_t n_edges = 0;
+    using nbr_t = typename FRAG_T::nbr_t;
+    for (auto u : frag.InnerVertices()) {
+      n_edges += frag.GetLocalOutDegree(u) + frag.GetLocalInDegree(u);
+    }
+
+    messages.InitBuffer(1.5 * n_edges * sizeof(nbr_t),
+                        1.5 * n_edges * sizeof(nbr_t));
   }
 
   void Output(std::ostream& os) override {
@@ -209,7 +230,7 @@ class LCC : public GPUAppBase<FRAG_T, LCCContext<FRAG_T>>,
 
       ForEachWithIndex(
           stream, ws_in, [=] __device__(size_t idx, vertex_t u) mutable {
-            // TODO: Load balancing
+            // TODO(liang): Load balancing
             for (auto begin = d_row_offset[idx]; begin < d_row_offset[idx + 1];
                  begin++) {
               auto v_gid = d_col_indices[begin];
@@ -315,7 +336,8 @@ class LCC : public GPUAppBase<FRAG_T, LCCContext<FRAG_T>>,
                   auto max_degree = max(degree_u, degree_v);
                   auto total_degree = degree_u + degree_v;
 
-                  if (min_degree * ilogb((double)max_degree) * 10 < total_degree) {
+                  if (min_degree * ilogb(static_cast<double>(max_degree)) * 10 <
+                      total_degree) {
                     auto min_edge_begin =
                         degree_u < degree_v ? edge_begin_u : edge_begin_v;
                     auto min_edge_end = min_edge_begin + min_degree;
@@ -389,4 +411,4 @@ class LCC : public GPUAppBase<FRAG_T, LCCContext<FRAG_T>>,
 }  // namespace cuda
 }  // namespace grape
 #endif  // __CUDACC__
-#endif
+#endif  // EXAMPLES_ANALYTICAL_APPS_CUDA_LCC_LCC_H_

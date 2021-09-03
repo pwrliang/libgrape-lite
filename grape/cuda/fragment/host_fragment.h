@@ -1,6 +1,20 @@
+/** Copyright 2020 Alibaba Group Holding Limited.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 #ifndef GRAPE_CUDA_FRAGMENT_HOST_FRAGMENT_H_
 #define GRAPE_CUDA_FRAGMENT_HOST_FRAGMENT_H_
-
 
 #include <algorithm>
 #include <cassert>
@@ -1364,12 +1378,13 @@ class HostFragment {
           auto v = e.get_neighbor();
           auto data = e.get_data();
 
-          edges.push_back(typename coo_t::edge_t(u.GetValue(), v.GetValue(), data));
+          edges.push_back(
+              typename coo_t::edge_t(u.GetValue(), v.GetValue(), data));
         }
       }
 
       coo_frag_ = std::make_shared<coo_t>();
-      //coo_frag_->Init(edges);
+      // coo_frag_->Init(edges);
     }
     return coo_frag_;
   }

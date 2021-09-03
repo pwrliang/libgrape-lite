@@ -1,5 +1,20 @@
-#ifndef GRAPE_CUDA_UTILS_DEV_VERTEX_ARRAY_H_
-#define GRAPE_CUDA_UTILS_DEV_VERTEX_ARRAY_H_
+/** Copyright 2020 Alibaba Group Holding Limited.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#ifndef GRAPE_CUDA_UTILS_VERTEX_ARRAY_H_
+#define GRAPE_CUDA_UTILS_VERTEX_ARRAY_H_
 #include <thrust/device_vector.h>
 
 #include <cub/util_type.cuh>
@@ -120,8 +135,8 @@ class VertexArray : public grape::Array<T, grape::Allocator<T>> {
   const VertexRange<VID_T>& GetVertexRange() const { return range_; }
 
   dev::VertexArray<T, VID_T> DeviceObject() {
-    return dev::VertexArray<T, VID_T>(
-        range_, thrust::raw_pointer_cast(d_data_.data()));
+    return dev::VertexArray<T, VID_T>(range_,
+                                      thrust::raw_pointer_cast(d_data_.data()));
   }
 
   void H2D() {
@@ -164,4 +179,4 @@ struct Traits<grape::Vertex<T>>
 
 }  // namespace cub
 
-#endif  // GRAPE_CUDA_UTILS_DEV_VERTEX_ARRAY_H_
+#endif  // GRAPE_CUDA_UTILS_VERTEX_ARRAY_H_

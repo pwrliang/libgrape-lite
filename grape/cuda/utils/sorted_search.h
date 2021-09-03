@@ -1,3 +1,17 @@
+/** Copyright 2020 Alibaba Group Holding Limited.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 #ifndef GRAPE_CUDA_UTILS_SORTED_SEARCH_H_
 #define GRAPE_CUDA_UTILS_SORTED_SEARCH_H_
@@ -58,12 +72,12 @@ void sorted_search(const Stream& stream, needles_it needles, int num_needles,
 
   KernelWrapper<<<grid_dims, block_dims, 0, stream.cuda_stream()>>>(
       [=] __device__() {
-        int tid = (int) (threadIdx.x % (unsigned) nt);
+        int tid = static_cast<int>(threadIdx.x % (unsigned) nt);
         int cta = blockIdx.x;
 
         __shared__ union {
-          type_t keys[nv + 1];
-          int indices[nv];
+          type_t keys[nv + 1];  // NOLINT(runtime/arrays)
+          int indices[nv];      // NOLINT(runtime/arrays)
         } shared;
 
         // Load the range for this CTA and merge the values into register.
