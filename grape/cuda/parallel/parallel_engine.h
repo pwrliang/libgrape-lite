@@ -118,7 +118,6 @@ struct VertexMetadata<VID_T, grape::EmptyType> {
 
   DEV_INLINE void set_metadata(const grape::EmptyType&) {}
 
-
   __device__ VertexMetadata<VID_T, grape::EmptyType>(
       const VertexMetadata<VID_T, grape::EmptyType>& rhs) {
     vertex = rhs.vertex;
@@ -211,6 +210,7 @@ struct empty_np {};
 
 template <typename ts_type, typename TTB, typename TWP, typename TFG = empty_np>
 union np_shared {
+  DEV_HOST np_shared() {}
   // for scans
   ts_type temp_storage;
 
@@ -641,7 +641,6 @@ template <typename FRAG_T, typename WORK_SOURCE_T, typename ASSIGN_OP,
           typename EDGE_OP, EdgeDirection ed>
 DEV_INLINE void LBCTA(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
                       ASSIGN_OP assign_op, EDGE_OP op) {
-  /*FIXME:
   using edata_t = typename FRAG_T::edata_t;
   using vertex_t = typename FRAG_T::vertex_t;
   using vid_t = typename FRAG_T::vid_t;
@@ -649,12 +648,12 @@ DEV_INLINE void LBCTA(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
   auto tid = TID_1D;
   auto nthreads = TOTAL_THREADS_1D;
   auto size = work_source.size();
-  auto size_rup = round_up(size, blockDim.x) * blockDim.x;
+  auto size_rup = dev::round_up(size, blockDim.x) * blockDim.x;
   using metadata_t = typename std::result_of<ASSIGN_OP&(vertex_t&)>::type;
   using vertex_metadata_t = VertexMetadata<vid_t, metadata_t>;
 
   for (auto i = 0 + tid; i < size_rup; i += nthreads) {
-    np_local<vid_t, edata_t, vertex_metadata_t> np_local;
+    np_local<vid_t, edata_t, vertex_metadata_t> local;
 
     if (i < size) {
       vertex_metadata_t vm;
@@ -663,14 +662,13 @@ DEV_INLINE void LBCTA(const FRAG_T& dev_frag, const WORK_SOURCE_T& work_source,
 
       vm.set_vertex(v);
       vm.set_metadata(assign_op(v));
-      np_local = np_local<vid_t, edata_t, vertex_metadata_t>(adj_list, vm);
+      local = np_local<vid_t, edata_t, vertex_metadata_t>(adj_list, vm);
     }
 
-    dev::CTAWorkScheduler<vid_t, edata_t, vertex_metadata_t>::schedule(
-        np_local, [=](const Nbr<vid_t, edata_t>& nbr,
-                      const vertex_metadata_t& vm) mutable { op(vm, nbr); });
+    CTAWorkScheduler<vid_t, edata_t, vertex_metadata_t>::schedule(
+        local, [=](const Nbr<vid_t, edata_t>& nbr,
+                   const vertex_metadata_t& vm) mutable { op(vm, nbr); });
   }
-   */
 }
 
 template <typename FRAG_T, typename WORK_SOURCE_T, typename ASSIGN_OP,
@@ -783,30 +781,27 @@ class ParallelEngine {
   inline void ForEachEdge(const Stream& stream, const FRAG_T& dev_frag,
                           const WORK_SOURCE_T& ws, ASSIGN_OP assign_op,
                           EDGE_OP op, LoadBalancing lb) {
-    ForEachEdgeNone<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-        stream, dev_frag, ws, assign_op, op);
-
-//    if (lb == LoadBalancing::kCMOld) {
-//      ForEachEdgeCMOld<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-//          stream, dev_frag, ws, assign_op, op);
-//    } else if (lb == LoadBalancing::kCM) {
-//      ForEachEdgeCM<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-//          stream, dev_frag, ws, assign_op, op);
-//    } else if (lb == LoadBalancing::kWarp) {
-//      ForEachEdgeWarp<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-//          stream, dev_frag, ws, assign_op, op);
-//    } else if (lb == LoadBalancing::kCTA) {
-//      ForEachEdgeCTA<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-//          stream, dev_frag, ws, assign_op, op);
-//    } else if (lb == LoadBalancing::kStrict) {
-//      ForEachEdgeStrict<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-//          stream, dev_frag, ws, assign_op, op);
-//    } else if (lb == LoadBalancing::kNone) {
-//      ForEachEdgeNone<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
-//          stream, dev_frag, ws, assign_op, op);
-//    } else {
-//      LOG(FATAL) << "Invalid lb policy";
-//    }
+    if (lb == LoadBalancing::kCMOld) {
+      ForEachEdgeCMOld<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+          stream, dev_frag, ws, assign_op, op);
+    } else if (lb == LoadBalancing::kCM) {
+      ForEachEdgeCM<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+          stream, dev_frag, ws, assign_op, op);
+    } else if (lb == LoadBalancing::kWarp) {
+      ForEachEdgeWarp<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+          stream, dev_frag, ws, assign_op, op);
+    } else if (lb == LoadBalancing::kCTA) {
+      ForEachEdgeCTA<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+          stream, dev_frag, ws, assign_op, op);
+    } else if (lb == LoadBalancing::kStrict) {
+      ForEachEdgeStrict<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+          stream, dev_frag, ws, assign_op, op);
+    } else if (lb == LoadBalancing::kNone) {
+      ForEachEdgeNone<FRAG_T, WORK_SOURCE_T, ASSIGN_OP, EDGE_OP, ed>(
+          stream, dev_frag, ws, assign_op, op);
+    } else {
+      LOG(FATAL) << "Invalid lb policy";
+    }
   }
 
   template <typename FRAG_T, typename WORK_SOURCE_T, typename ASSIGN_OP,
