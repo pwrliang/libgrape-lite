@@ -52,13 +52,6 @@ using Allocator = DefaultAllocator<T>;
 #define DEV_HOST __device__ __host__
 #define DEV_HOST_INLINE __device__ __host__ __forceinline__
 #define DEV_INLINE __device__ __forceinline__
-#else
-#define DEV_HOST
-#define DEV_HOST_INLINE inline
-#define DEV_INLINE
-#endif
-
-#ifdef __CUDACC__
 #define MAX_BLOCK_SIZE 256
 #define MAX_GRID_SIZE 768
 #define TID_1D (threadIdx.x + blockIdx.x * blockDim.x)
@@ -67,6 +60,10 @@ using Allocator = DefaultAllocator<T>;
 template <typename T>
 using pinned_vector =
     thrust::host_vector<T, thrust::cuda::experimental::pinned_allocator<T>>;
+#else
+#define DEV_HOST
+#define DEV_HOST_INLINE inline
+#define DEV_INLINE
 #endif
 
 const int kCoordinatorRank = 0;
