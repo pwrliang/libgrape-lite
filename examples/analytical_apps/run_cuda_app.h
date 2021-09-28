@@ -121,15 +121,17 @@ void CreateAndQuery(const grape::CommSpec& comm_spec, const std::string& efile,
 
   timer_next("print output");
 
-  std::ofstream ostream;
-  std::string output_path =
-      grape::GetResultFilename(out_prefix, fragment->fid());
-  ostream.open(output_path);
-  worker->Output(ostream);
-  ostream.close();
+  if (!out_prefix.empty()) {
+    std::ofstream ostream;
+    std::string output_path =
+        grape::GetResultFilename(out_prefix, fragment->fid());
+    ostream.open(output_path);
+    worker->Output(ostream);
+    ostream.close();
+    VLOG(1) << "Worker-" << comm_spec.worker_id() << " finished: " << output_path;
+  }
   worker->Finalize();
   timer_end();
-  VLOG(1) << "Worker-" << comm_spec.worker_id() << " finished: " << output_path;
 }
 
 template <typename OID_T, typename VID_T, typename VDATA_T, typename EDATA_T>
