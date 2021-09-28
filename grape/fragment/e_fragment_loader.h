@@ -95,6 +95,48 @@ class EFragmentLoader {
     }
 
     std::vector<oid_t> id_list;
+
+    if (std::is_same<partitioner_t, SegmentedPartitioner<oid_t>>::value) {
+      VLOG(2) << "Constructing the oid set";
+      std::unordered_set<oid_t> id_set;
+      auto io_adaptor =
+          std::unique_ptr<IOADAPTOR_T>(new IOADAPTOR_T(std::string(efile)));
+      io_adaptor->Open();
+      std::string line;
+      edata_t e_data;
+      oid_t src, dst;
+      size_t lineNo = 0;
+      bool skip = spec.skip_first_valid_line;
+
+      while (io_adaptor->ReadLine(line)) {
+        ++lineNo;
+        if (lineNo % 1000000 == 0) {
+          VLOG(10) << "[worker-" << comm_spec_.worker_id() << "][efile] "
+                   << lineNo;
+        }
+        if (line.empty() || line[0] == '#' || line[0] == '%')
+          continue;
+
+        try {
+          line_parser_.LineParserForEFile(line, src, dst, e_data);
+        } catch (std::exception& e) {
+          VLOG(1) << e.what();
+          continue;
+        }
+
+        if (skip) {
+          skip = false;
+          VLOG(1) << "Skip line no " << lineNo << ": " << line;
+          continue;
+        }
+
+        id_set.insert(src);
+        id_set.insert(dst);
+      }
+      io_adaptor->Close();
+      id_list.template assign(id_set.begin(), id_set.end());
+    }
+
     partitioner_t partitioner(comm_spec_.fnum(), id_list);
 
     basic_fragment_loader_.SetPartitioner(std::move(partitioner));
@@ -204,3 +246,4 @@ class EFragmentLoader {
 }  // namespace grape
 
 #endif  // GRAPE_FRAGMENT_E_FRAGMENT_LOADER_H_
+

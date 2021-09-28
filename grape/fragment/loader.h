@@ -100,7 +100,10 @@ template <typename FRAG_T,
 static std::shared_ptr<FRAG_T> LoadGraph(
     const std::string& efile, const std::string& vfile,
     const CommSpec& comm_spec,
-    const LoadGraphSpec& spec = DefaultLoadGraphSpec()) {
+    LoadGraphSpec& spec) {
+  auto serialization_prefix = spec.serialization_prefix;
+  SetSerialize<FRAG_T, PARTITIONER_T>(comm_spec, serialization_prefix, efile,
+                                      vfile, spec);
   if (vfile.empty()) {
     std::unique_ptr<
         EFragmentLoader<FRAG_T, PARTITIONER_T, IOADAPTOR_T, LINE_PARSER_T>>
@@ -119,3 +122,4 @@ static std::shared_ptr<FRAG_T> LoadGraph(
 }  // namespace grape
 
 #endif  // GRAPE_FRAGMENT_LOADER_H_
+

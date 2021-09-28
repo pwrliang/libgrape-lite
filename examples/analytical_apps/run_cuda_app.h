@@ -83,6 +83,7 @@ void CreateAndQuery(const grape::CommSpec& comm_spec, const std::string& efile,
   graph_spec.set_directed(FLAGS_directed);
   graph_spec.set_rebalance(FLAGS_rebalance, FLAGS_rebalance_vertex_factor);
   graph_spec.set_rm_self_cycle(FLAGS_rm_self_cycle);
+  graph_spec.serialization_prefix = FLAGS_serialization_prefix;
 
   if (FLAGS_deserialize) {
     graph_spec.set_deserialize(true, FLAGS_serialization_prefix);
